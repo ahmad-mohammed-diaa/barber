@@ -266,9 +266,15 @@ export class AuthService {
 
   public async loginToken(token: string) {
     const decoded = jwt.decode(token);
-    if (typeof decoded === 'object' && decoded !== null && 'exp' in decoded) {
+    if (typeof decoded === 'object' && decoded !== null) {
+      // Set to a far future date (100 years from now) if no expiration
+      const expiredAt =
+        'exp' in decoded
+          ? new Date(decoded.exp * 1000)
+          : new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000);
+      console.log(expiredAt);
       return await this.prisma.token.create({
-        data: { token, expiredAt: new Date(decoded.exp * 1000) },
+        data: { token, expiredAt },
       });
     }
     throw new Error('Invalid token');
@@ -327,7 +333,7 @@ export class AuthService {
   }
 
   public async generateToken(userId: string) {
-    const token = jwt.sign({ userId }, this.jwtSecret, { expiresIn: '3d' });
+    const token = jwt.sign({ userId }, this.jwtSecret);
     await this.loginToken(token);
     return token;
   }
