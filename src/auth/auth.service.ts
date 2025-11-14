@@ -327,7 +327,7 @@ export class AuthService {
   }
 
   public async generateToken(userId: string) {
-    const token = jwt.sign({ userId }, this.jwtSecret, { expiresIn: '6h' });
+    const token = jwt.sign({ userId }, this.jwtSecret, { expiresIn: '3d' });
     await this.loginToken(token);
     return token;
   }
