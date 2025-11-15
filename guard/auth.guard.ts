@@ -66,7 +66,8 @@ export function AuthGuard(required = true): any {
           if (decoded === process.env.API_KEY) {
             req.apiKeyUser = { role: 'api', access: 'basic' };
           }
-        } catch (e) {
+        } catch (error) {
+          console.error('API key verification failed:', error);
           throw new UnauthorizedException('Invalid API key');
         }
       }
