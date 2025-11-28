@@ -2,8 +2,8 @@ import {
   Controller,
   Post,
   Body,
+  Patch,
   UseGuards,
-  Param,
   UploadedFile,
   UseInterceptors,
   ConflictException,
@@ -16,6 +16,7 @@ import { UserData } from 'decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../src/config/multer.config';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { Roles } from 'decorators/roles.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -51,5 +52,12 @@ export class AuthController {
       { referralCode: isCodeValid },
       'Referral Code is Applying',
     );
+  }
+
+  @UseGuards(AuthGuard())
+  @Roles(['ADMIN', 'CASHIER'])
+  @Patch('/reset-password')
+  resetPassword(@Body('phone') phone: string) {
+    return this.authService.resetPassword(phone);
   }
 }

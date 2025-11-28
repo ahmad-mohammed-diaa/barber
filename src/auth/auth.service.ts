@@ -3,6 +3,7 @@ import {
   ConflictException,
   Global,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from '../utils/AppSuccess';
 import { Client, Prisma, Role, User } from '@prisma/client';
 import { Random } from '../utils/generate';
+import { DEFAULT_PASSWORD } from '../utils/constants';
 
 @Global()
 @Injectable()
@@ -346,6 +348,32 @@ export class AuthService {
     });
     if (!isReferralCodeExist) return { status: false, user: null };
     return { status: true, user: isReferralCodeExist };
+  }
+
+  public async resetPassword(phone: string) {
+    const password = DEFAULT_PASSWORD;
+    const user = await this.prisma.user.findUnique({
+      where: { phone: phone },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const hashedPassword = await hash(password, 10);
+
+    try {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+        omit: { password: true },
+      });
+
+      return new AppSuccess(user, 'Password reset successfully');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw new InternalServerErrorException('Failed to reset password');
+    }
   }
 
   async generateSlots(start: number, end: number) {
