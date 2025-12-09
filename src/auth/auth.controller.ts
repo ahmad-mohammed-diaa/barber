@@ -7,6 +7,7 @@ import {
   UploadedFile,
   UseInterceptors,
   ConflictException,
+  Param,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/auth-login-dto';
@@ -17,6 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../src/config/multer.config';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { Roles } from 'decorators/roles.decorator';
+import { RolesGuard } from 'guard/role.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -55,7 +57,13 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard())
-  @Roles(['ADMIN', 'CASHIER'])
+  @Patch('/change-password/:id')
+  changePassword(@Param('id') id: string, @Body('password') password: string) {
+    return this.authService.changePassword(id, password);
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['USER'])
   @Patch('/reset-password')
   resetPassword(@Body('phone') phone: string) {
     return this.authService.resetPassword(phone);

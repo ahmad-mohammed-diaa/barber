@@ -266,6 +266,41 @@ export class AuthService {
     });
   }
 
+  private async invalidateAllUserTokens(userId: string) {
+    // Get all tokens from database
+    const allTokens = await this.prisma.token.findMany();
+
+    // Filter tokens that belong to this user by decoding them
+    const userTokenIds: string[] = [];
+    for (const tokenRecord of allTokens) {
+      try {
+        const decoded = jwt.decode(tokenRecord.token);
+        if (
+          decoded &&
+          typeof decoded === 'object' &&
+          'userId' in decoded &&
+          decoded.userId === userId
+        ) {
+          userTokenIds.push(tokenRecord.id);
+        }
+      } catch {
+        // Skip invalid tokens
+        continue;
+      }
+    }
+
+    // Delete all tokens belonging to this user
+    if (userTokenIds.length > 0) {
+      await this.prisma.token.deleteMany({
+        where: {
+          id: {
+            in: userTokenIds,
+          },
+        },
+      });
+    }
+  }
+
   public async loginToken(token: string) {
     const decoded = jwt.decode(token);
     if (typeof decoded === 'object' && decoded !== null) {
@@ -350,6 +385,31 @@ export class AuthService {
     return { status: true, user: isReferralCodeExist };
   }
 
+  public async changePassword(id: string, password: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: id },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    const hashedPassword = await hash(password, 10);
+    try {
+      await this.prisma.user.update({
+        where: { id: id },
+        data: { password: hashedPassword },
+        omit: { password: true },
+      });
+
+      // Invalidate all tokens for this user (log out from all devices)
+      await this.invalidateAllUserTokens(id);
+
+      return new AppSuccess(null, 'Password changed successfully');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw new BadRequestException('Failed to change password');
+    }
+  }
+
   public async resetPassword(phone: string) {
     const password = DEFAULT_PASSWORD;
     const user = await this.prisma.user.findUnique({
@@ -366,6 +426,9 @@ export class AuthService {
         data: { password: hashedPassword },
         omit: { password: true },
       });
+
+      // Invalidate all tokens for this user (log out from all devices)
+      await this.invalidateAllUserTokens(user.id);
 
       return new AppSuccess(user, 'Password reset successfully');
     } catch (error: unknown) {
