@@ -63,7 +63,7 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(['USER'])
+  @Roles(['ADMIN', 'CASHIER'])
   @Patch('/reset-password')
   resetPassword(@Body('phone') phone: string) {
     return this.authService.resetPassword(phone);
