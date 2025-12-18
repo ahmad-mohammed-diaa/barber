@@ -21,7 +21,7 @@ import { ProductModule } from './product/product.module';
 import { StaticModule } from './static/static.module';
 import { AdminModule } from './admin/admin.module';
 import { SmsModule } from './sms/sms.module';
-import { NotificationScheduler } from 'src/notification/NotificationScheduler';
+import { NotificationScheduler } from 'src/notification/notificationScheduler';
 
 @Module({
   imports: [
