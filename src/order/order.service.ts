@@ -26,7 +26,7 @@ import { toZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
-import { comparePassword } from 'src/utils/lib';
+import { comparePassword } from '../utils/lib';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;
@@ -293,7 +293,13 @@ export class OrderService {
         branchId: cashier.branchId,
         NOT: {
           status: {
-            in: [OrderStatus.PAID],
+            in: [
+              OrderStatus.CASHIER_CANCELLED,
+              OrderStatus.CLIENT_CANCELLED,
+              OrderStatus.BARBER_CANCELLED,
+              OrderStatus.ADMIN_CANCELLED,
+              OrderStatus.PAID,
+            ],
           },
         },
         date: { gte: startOfDay(from), lte: endOfDay(to) },
@@ -905,6 +911,19 @@ export class OrderService {
         `You can only book up to ${settings.maxDaysBooking} days in advance`,
       );
 
+    const discountDisplay =
+      promoCode && pointsDiscount > 0
+        ? validPromoCode?.type === 'PERCENTAGE'
+          ? `${validPromoCode?.discount}% + ${pointsDiscount}EGP`
+          : `${discount}EGP + ${pointsDiscount}EGP`
+        : promoCode
+          ? validPromoCode?.type === 'PERCENTAGE'
+            ? `${validPromoCode?.discount}%`
+            : `${validPromoCode?.discount}EGP`
+          : pointsDiscount > 0
+            ? `${pointsDiscount}EGP`
+            : '0';
+
     return new AppSuccess(
       {
         date: format(new Date(dateWithoutTime), 'yyyy-MM-dd'),
@@ -923,11 +942,7 @@ export class OrderService {
         duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
         promoCode: promoCode ? promoCode : null,
         subTotal: subTotal?.toString(),
-        discount: promoCode
-          ? validPromoCode?.type === 'PERCENTAGE'
-            ? `${validPromoCode?.discount}%`
-            : `${validPromoCode?.discount}EGP`
-          : '0',
+        discount: discountDisplay,
         pointsDiscount: pointsDiscount.toString(),
         total: total.toString(),
         limit: settings.pointLimit.toString(),
@@ -1321,6 +1336,19 @@ export class OrderService {
       0,
     );
 
+    const discountDisplay =
+      promoCode && pointsDiscount > 0
+        ? validPromoCode?.type === 'PERCENTAGE'
+          ? `${validPromoCode?.discount}% + ${pointsDiscount}EGP`
+          : `${discount}EGP + ${pointsDiscount}EGP`
+        : promoCode
+          ? validPromoCode?.type === 'PERCENTAGE'
+            ? `${validPromoCode?.discount}%`
+            : `${validPromoCode?.discount}EGP`
+          : pointsDiscount > 0
+            ? `${pointsDiscount}EGP`
+            : '0';
+
     return new AppSuccess(
       {
         date: format(order.date, 'yyyy-MM-dd'),
@@ -1334,11 +1362,7 @@ export class OrderService {
         duration: `${duration} ${lang === 'AR' ? 'دقيقة' : 'minutes'}`,
         promoCode: promoCode ? promoCode : null,
         subTotal: order.subTotal?.toString(),
-        discount: promoCode
-          ? validPromoCode?.type === 'PERCENTAGE'
-            ? `${validPromoCode?.discount}%`
-            : `${validPromoCode?.discount}EGP`
-          : '0',
+        discount: discountDisplay,
         total: order.total?.toString(),
       },
       'Order created successfully',

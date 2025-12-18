@@ -167,7 +167,7 @@ model questions {
 model Token {
   id        String   @id @default(uuid())
   token     String   @unique
-  expiredAt DateTime
+  expiredAt DateTime?
 }
 
 model Complain {

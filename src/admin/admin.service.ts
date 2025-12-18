@@ -159,7 +159,6 @@ export class AdminService {
   }
 
   private async TotalSalesPerBranch(fromDate?: Date, toDate?: Date) {
-    // Use startOfDay and endOfDay to ensure we capture the full day range
     const dateFilter =
       fromDate && toDate
         ? { date: { gte: startOfDay(fromDate), lte: endOfDay(toDate) } }
@@ -174,14 +173,17 @@ export class AdminService {
             id: true,
             user: {
               select: {
-                _count: { select: { BarberOrders: true } },
                 firstName: true,
                 lastName: true,
                 phone: true,
                 id: true,
                 BarberOrders: {
-                  where: dateFilter,
+                  where: {
+                    status: OrderStatus.PAID, // Add this to match TotalSales logic
+                    ...dateFilter,
+                  },
                   select: {
+                    total: true, // ✅ Get the actual order total
                     service: {
                       select: { Translation: true, price: true, id: true },
                     },
@@ -202,24 +204,32 @@ export class AdminService {
           name: string;
           price: number;
           count: number;
+          totalRevenue: number;
         }[] = [];
+
+        // ✅ Calculate total sales from actual order totals
+        const totalSales = barber.user.BarberOrders.reduce(
+          (sum, order) => sum + (order.total || 0),
+          0,
+        );
+
         barber.user.BarberOrders.forEach((order) => {
           order.service.forEach((srv) => {
             const name =
               TranslateName({ Translation: srv.Translation }, 'EN')?.name ??
               'Unknown';
 
-            // Check if service already exists in summary
             const existing = servicesSummary.find((s) => s.id === srv.id);
             if (existing) {
-              existing.price += srv.price; // accumulate price
-              existing.count += 1; // increment count
+              existing.count += 1;
+              existing.totalRevenue += srv.price; // Keep this for service breakdown
             } else {
               servicesSummary.push({
                 id: srv.id,
                 name: name,
                 price: srv.price,
                 count: 1,
+                totalRevenue: srv.price,
               });
             }
           });
@@ -228,12 +238,9 @@ export class AdminService {
         return {
           id: barber.id,
           barber: `${barber.user.firstName} ${barber.user.lastName}`,
-          orderCount: barber.user._count.BarberOrders,
-          sales: Object.values(servicesSummary).reduce(
-            (a, b) => a + b.price,
-            0,
-          ),
-          services: servicesSummary,
+          orderCount: barber.user.BarberOrders.length,
+          sales: totalSales, // ✅ Use actual order totals
+          services: servicesSummary, // Service breakdown (for reference)
         };
       });
       return {

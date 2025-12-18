@@ -21,6 +21,7 @@ import { ProductModule } from './product/product.module';
 import { StaticModule } from './static/static.module';
 import { AdminModule } from './admin/admin.module';
 import { SmsModule } from './sms/sms.module';
+import { NotificationScheduler } from 'src/notification/NotificationScheduler';
 
 @Module({
   imports: [
@@ -49,6 +50,6 @@ import { SmsModule } from './sms/sms.module';
     SmsModule,
   ],
   controllers: [],
-  providers: [TokenService],
+  providers: [TokenService, NotificationScheduler],
 })
 export class AppModule {}

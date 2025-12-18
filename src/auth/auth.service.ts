@@ -3,6 +3,7 @@ import {
   ConflictException,
   Global,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from '../utils/AppSuccess';
 import { Client, Prisma, Role, User } from '@prisma/client';
 import { Random } from '../utils/generate';
+import { DEFAULT_PASSWORD } from '../utils/constants';
 
 @Global()
 @Injectable()
@@ -264,11 +266,52 @@ export class AuthService {
     });
   }
 
+  private async invalidateAllUserTokens(userId: string) {
+    // Get all tokens from database
+    const allTokens = await this.prisma.token.findMany();
+
+    // Filter tokens that belong to this user by decoding them
+    const userTokenIds: string[] = [];
+    for (const tokenRecord of allTokens) {
+      try {
+        const decoded = jwt.decode(tokenRecord.token);
+        if (
+          decoded &&
+          typeof decoded === 'object' &&
+          'userId' in decoded &&
+          decoded.userId === userId
+        ) {
+          userTokenIds.push(tokenRecord.id);
+        }
+      } catch {
+        // Skip invalid tokens
+        continue;
+      }
+    }
+
+    // Delete all tokens belonging to this user
+    if (userTokenIds.length > 0) {
+      await this.prisma.token.deleteMany({
+        where: {
+          id: {
+            in: userTokenIds,
+          },
+        },
+      });
+    }
+  }
+
   public async loginToken(token: string) {
     const decoded = jwt.decode(token);
-    if (typeof decoded === 'object' && decoded !== null && 'exp' in decoded) {
+    if (typeof decoded === 'object' && decoded !== null) {
+      // Set to a far future date (100 years from now) if no expiration
+      const expiredAt =
+        'exp' in decoded
+          ? new Date(decoded.exp * 1000)
+          : new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000);
+      console.log(expiredAt);
       return await this.prisma.token.create({
-        data: { token, expiredAt: new Date(decoded.exp * 1000) },
+        data: { token, expiredAt },
       });
     }
     throw new Error('Invalid token');
@@ -327,7 +370,7 @@ export class AuthService {
   }
 
   public async generateToken(userId: string) {
-    const token = jwt.sign({ userId }, this.jwtSecret, { expiresIn: '6h' });
+    const token = jwt.sign({ userId }, this.jwtSecret);
     await this.loginToken(token);
     return token;
   }
@@ -340,6 +383,65 @@ export class AuthService {
     });
     if (!isReferralCodeExist) return { status: false, user: null };
     return { status: true, user: isReferralCodeExist };
+  }
+
+  public async changePassword(id: string, password: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: id },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    const hashedPassword = await hash(password, 10);
+    try {
+      await this.prisma.user.update({
+        where: { id: id },
+        data: { password: hashedPassword },
+        omit: { password: true },
+      });
+
+      // Invalidate all tokens for this user (log out from all devices)
+      await this.invalidateAllUserTokens(id);
+
+      return new AppSuccess(null, 'Password changed successfully');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw new BadRequestException('Failed to change password');
+    }
+  }
+
+  public async resetPassword(phone: string) {
+    const password = DEFAULT_PASSWORD;
+    const user = await this.prisma.user.findUnique({
+      where: {
+        phone: phone,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    if (user.role?.toUpperCase() === Role.ADMIN) {
+      throw new BadRequestException('Admin cannot reset password');
+    }
+    const hashedPassword = await hash(password, 10);
+
+    try {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+        omit: { password: true },
+      });
+
+      // Invalidate all tokens for this user (log out from all devices)
+      await this.invalidateAllUserTokens(user.id);
+
+      return new AppSuccess(user, 'Password reset successfully');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw new InternalServerErrorException('Failed to reset password');
+    }
   }
 
   async generateSlots(start: number, end: number) {

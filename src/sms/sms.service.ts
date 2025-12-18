@@ -9,7 +9,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import axios from 'axios';
 import { RegisterDto } from 'src/auth/dto/auth-register-dto';
 import { AuthService } from 'src/auth/auth.service';
-import { Random } from 'src/utils/generate';
 import { hash } from 'bcrypt';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AppSuccess } from 'src/utils/AppSuccess';
@@ -26,7 +25,7 @@ export class SmsService {
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
   ) {
-    this.senderName = process.env.SMS_SENDERNAME;
+    this.senderName = process.env.SMS_SENDER_NAME;
     this.username = process.env.SMS_USERNAME;
     this.password = process.env.SMS_PASSWORD;
   }
@@ -67,7 +66,7 @@ export class SmsService {
 It expires in 5 minutes. Do not share this code with anyone.
 `;
 
-    const url = `${process.env.SMS_API_URL}?username=${encodeURIComponent(this.username)}&password=${encodeURIComponent(this.password)}&sendername=${this.senderName}&message=${encodeURIComponent(message)}&mobiles=${phone}`;
+    const url = `${process.env.SMS_API_URL}?username=${encodeURIComponent(this.username)}&password=${encodeURIComponent(this.password)}&sendername=${this.senderName}&message=${encodeURIComponent(message)}&mobiles=2${phone}`;
 
     try {
       await axios.post(url, null, {
@@ -77,7 +76,10 @@ It expires in 5 minutes. Do not share this code with anyone.
           'Accept-Language': 'en-US',
         },
       });
-    } catch (error) {}
+    } catch (error) {
+      this.logger.error(`Error sending SMS: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('Failed to send SMS');
+    }
   }
 
   async sendVerificationCode(body: RegisterDto) {

@@ -1,3 +1,4 @@
+import { Order } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 export const hashedPassword = async (password: string) =>
@@ -7,3 +8,25 @@ export const comparePassword = async (
   password: string,
   hashedPassword: string,
 ) => await bcrypt.compare(password, hashedPassword);
+
+export const getOrderDateTime = (
+  order: any & { client: { fcmToken: string } },
+): { date: Date; fcmToken: string } => {
+  const slotRegex = /(\d{1,2}):(\d{2})\s?(AM|PM)/;
+  const match = order.slot.match(slotRegex);
+
+  if (!match) return null;
+
+  const [_, hoursStr, minutesStr, meridiem] = match;
+  let hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
+
+  if (meridiem === 'PM' && hours !== 12) hours += 12;
+  if (meridiem === 'AM' && hours === 12) hours = 0;
+
+  const date = new Date(order.date);
+  date.setHours(hours);
+  date.setMinutes(minutes);
+  date.setSeconds(0);
+  return { date, fcmToken: order.client.fcmToken };
+};
