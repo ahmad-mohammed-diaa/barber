@@ -7,7 +7,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';

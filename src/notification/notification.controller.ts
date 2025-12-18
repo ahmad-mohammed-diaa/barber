@@ -1,20 +1,10 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Headers,
-  UseGuards,
-  Put,
-  Get,
-  NotFoundException,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Put, Get } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import * as admin from 'firebase-admin';
 import { AuthGuard } from 'guard/auth.guard';
 import { UserData } from 'decorators/user.decorator';
 import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AppSuccess } from 'src/utils/AppSuccess';
 
 @UseGuards(AuthGuard())
 @Controller('notification')
