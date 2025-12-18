@@ -413,11 +413,16 @@ export class AuthService {
   public async resetPassword(phone: string) {
     const password = DEFAULT_PASSWORD;
     const user = await this.prisma.user.findUnique({
-      where: { phone: phone },
+      where: {
+        phone: phone,
+      },
     });
 
     if (!user) throw new NotFoundException('User not found');
 
+    if (user.role?.toUpperCase() === Role.ADMIN) {
+      throw new BadRequestException('Admin cannot reset password');
+    }
     const hashedPassword = await hash(password, 10);
 
     try {
