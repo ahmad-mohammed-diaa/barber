@@ -291,12 +291,22 @@ export class OrderService {
     const fetchedOrders = await this.prisma.order.findMany({
       where: {
         branchId: cashier.branchId,
-        NOT: { status: { in: [OrderStatus.PAID] } },
+        NOT: {
+          status: {
+            in: [
+              OrderStatus.CASHIER_CANCELLED,
+              OrderStatus.CLIENT_CANCELLED,
+              OrderStatus.BARBER_CANCELLED,
+              OrderStatus.ADMIN_CANCELLED,
+              OrderStatus.PAID,
+            ],
+          },
+        },
         date: { gte: startOfDay(from), lte: endOfDay(to) },
       },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
-        client: { include: { client: true } },
+        client: true,
         service: {
           include: {
             Translation: { where: { language: lang } },
@@ -311,7 +321,9 @@ export class OrderService {
         date: { gte: startOfDay(from), lte: endOfDay(to) },
         status: OrderStatus.PAID,
       },
-      _sum: { total: true },
+      _sum: {
+        total: true,
+      },
     });
 
     const orders = await Promise.all(
@@ -380,7 +392,6 @@ export class OrderService {
           slot,
           date: format(new Date(date), 'yyyy-MM-dd'),
           status,
-          clientPoints: order.client?.client.points || 0,
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
           barberUserName: barber
             ? `${barber.barber.user.firstName} ${barber.barber.user.lastName}`
@@ -1365,7 +1376,9 @@ export class OrderService {
       Role !== 'ADMIN' &&
       !(
         (order.status === 'PENDING' && Role === 'USER') ||
-        (order.status === 'IN_PROGRESS' && Role === 'BARBER')
+        (order.status === 'IN_PROGRESS' && Role === 'BARBER') ||
+        (['PENDING', 'IN_PROGRESS', 'COMPLETED'].includes(order.status) &&
+          Role === 'CASHIER')
       )
     ) {
       throw new ConflictException(
@@ -1373,7 +1386,56 @@ export class OrderService {
       );
     }
 
-    const { add, remove, addPackage, removePackage, ...rest } = updateOrderDto;
+    const { add, remove, addPackage, removePackage, barberId, ...rest } =
+      updateOrderDto;
+
+    if (barberId && barberId !== order.barberId) {
+      let totalDuration = order.service.reduce(
+        (acc, service) => acc + service.duration,
+        0,
+      );
+
+      if (Array.isArray(add) && add.length > 0) {
+        const addedServices = await this.prisma.service.findMany({
+          where: { id: { in: add } },
+          select: { duration: true },
+        });
+        totalDuration += addedServices.reduce(
+          (acc, service) => acc + service.duration,
+          0,
+        );
+      }
+
+      if (Array.isArray(remove) && remove.length > 0) {
+        const removedServices = order.service.filter((s) =>
+          remove.includes(s.id),
+        );
+        totalDuration -= removedServices.reduce(
+          (acc, service) => acc + service.duration,
+          0,
+        );
+      }
+
+      const dateWithoutTime = order.date.toISOString().split('T')[0];
+
+      const slotsResult = await this.getSlots(
+        dateWithoutTime,
+        barberId,
+        totalDuration,
+      );
+
+      if (!slotsResult.data.slots || slotsResult.data.slots.length === 0) {
+        throw new ConflictException(
+          'New barber has no available slots on this date.',
+        );
+      }
+
+      if (!slotsResult.data.slots.includes(order.slot)) {
+        throw new ConflictException(
+          `The slot ${order.slot} is not available for the new barber. The new barber needs ${totalDuration} minutes of consecutive free slots starting at ${order.slot}. Available slots: ${slotsResult.data.slots.join(', ')}`,
+        );
+      }
+    }
     const user = await this.prisma.user.findUnique({
       where: { id: order.userId },
       select: {
@@ -1520,6 +1582,7 @@ export class OrderService {
       where: { id },
       data: {
         ...rest,
+        ...(barberId && { barberId }),
         subTotal: order.subTotal,
         total,
         service: {
@@ -1821,84 +1884,42 @@ export class OrderService {
     });
   }
 
-  async paidOrder(
-    id: string,
-    userInfo: User,
-    body?: { discount?: number; points?: number },
-  ) {
-    const [currentOrder, settings, user] = await Promise.all([
-      this.prisma.order.findUnique({
-        where: {
-          id,
-          NOT: {
-            OR: [
-              { status: OrderStatus.PAID },
-              {
-                status: {
-                  in: [
-                    OrderStatus.ADMIN_CANCELLED,
-                    OrderStatus.CLIENT_CANCELLED,
-                    OrderStatus.BARBER_CANCELLED,
-                    OrderStatus.CASHIER_CANCELLED,
-                  ],
-                },
+  async paidOrder(id: string, user: User, body?: { discount?: number }) {
+    const currentOrder = await this.prisma.order.findUnique({
+      where: {
+        id,
+        NOT: {
+          OR: [
+            { status: OrderStatus.PAID },
+            {
+              status: {
+                in: [
+                  OrderStatus.ADMIN_CANCELLED,
+                  OrderStatus.CLIENT_CANCELLED,
+                  OrderStatus.BARBER_CANCELLED,
+                  OrderStatus.CASHIER_CANCELLED,
+                ],
               },
-            ],
-          },
+            },
+          ],
         },
-        select: { subTotal: true, total: true },
-      }),
-      this.prisma.settings.findFirst(),
-      this.prisma.user.findUnique({
-        where: { id: userInfo.id },
-        include: { client: true },
-      }),
-    ]);
-
-    if (!currentOrder)
-      throw new ConflictException('Order is either PAID or cancelled');
-
-    let code: PromoCode;
-
-    let total = currentOrder.total;
-
-    if (body && body.points) {
-      const points = body.points;
-      if (!settings) throw new NotFoundException('Settings not found');
-
-      if (points > settings.pointLimit)
-        throw new BadRequestException(
-          `Maximum points limit is ${settings.pointLimit}`,
-        );
-      if (points > user.client?.points)
-        throw new BadRequestException('Client do not have enough points');
-
-      if (points < 0)
-        throw new BadRequestException('Points cannot be negative');
-
-      if (!Number.isInteger(Number(points))) {
-        throw new Error('Points must be a whole number');
-      }
-      total = total - points;
+      },
+      select: { subTotal: true, total: true },
+    });
+    if (!currentOrder) {
+      throw new ConflictException('Order is either PAID or cancelleded');
     }
-
+    let code: PromoCode;
     if (body && body.discount) {
-      if (body.discount < 0)
-        throw new BadRequestException('Discount cannot be negative');
-
-      if (body.discount > 100)
-        throw new BadRequestException('Discount cannot be greater than 100%');
       code = await this.promoCodeService
         .createPromoCode({
           code: undefined,
           discount: body.discount,
-          type: 'PERCENTAGE',
-          expiredAt: new Date(Date.now() + 60 * 1000),
+          type: 'AMOUNT',
+          expiredAt: new Date(Date.now() + 60 * 1000), // 1 minute from now
         })
         .then((res) => res.data);
-      total = total - (currentOrder.subTotal * code.discount) / 100;
     }
-
     await this.findOneOrFail(id);
 
     const updatedOrder = await this.prisma.order.update({
@@ -1910,10 +1931,10 @@ export class OrderService {
         ...(code && {
           promoCode: code.code,
           discount: code.discount,
-          type: 'PERCENTAGE',
+          type: 'AMOUNT',
+          subTotal: currentOrder.subTotal,
+          total: currentOrder.total - code.discount,
         }),
-        subTotal: currentOrder.subTotal,
-        total,
       },
       include: {
         service: true,

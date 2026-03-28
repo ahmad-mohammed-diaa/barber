@@ -394,6 +394,22 @@ export class UserService {
     );
   }
 
+  public async updateBarberAvailability(id: string) {
+    const existing = await this.prisma.barber.findUnique({
+      where: { id },
+      select: { isAvailable: true },
+    });
+    const barber = await this.prisma.barber.update({
+      where: { id },
+      data: { isAvailable: !existing.isAvailable },
+    });
+    return new AppSuccess(
+      barber,
+      'Barber availability updated successfully',
+      200,
+    );
+  }
+
   private async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },

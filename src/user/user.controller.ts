@@ -11,6 +11,7 @@ import {
   Post,
   ParseUUIDPipe,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { AuthGuard } from 'guard/auth.guard';
@@ -63,6 +64,11 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.userService.updateUser(id, user, file);
+  }
+
+  @Patch('barber-availability/:id')
+  updateBarberAvailability(@Param('id', ParseUUIDPipe) id: string) {
+    return this.userService.updateBarberAvailability(id);
   }
 
   @Get(':id')
