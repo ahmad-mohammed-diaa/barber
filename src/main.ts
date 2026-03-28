@@ -6,6 +6,7 @@ import { PrismaService } from './prisma/prisma.service';
 import * as express from 'express';
 import { join } from 'path';
 import { FirstErrorOnlyFilter } from '../filters/validation-fields-only.filter';
+import { NotFoundFilter } from './utils/not-found.filter';
 
 config();
 
@@ -20,6 +21,7 @@ async function bootstrap() {
   const prismaService = app.get(PrismaService);
   await prismaService.onModuleInit();
   app.setGlobalPrefix('api');
+  app.useGlobalFilters(new NotFoundFilter());
   app.useGlobalFilters(new FirstErrorOnlyFilter());
   app.useGlobalPipes(
     new ValidationPipe({
