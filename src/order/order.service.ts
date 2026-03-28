@@ -380,7 +380,7 @@ export class OrderService {
           slot,
           date: format(new Date(date), 'yyyy-MM-dd'),
           status,
-          clientPoints: order.client?.client.points || 0,
+          clientPoints: order.client?.client?.points ?? 0,
 
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
           barberUserName: barber
