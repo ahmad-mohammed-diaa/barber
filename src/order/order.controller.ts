@@ -127,7 +127,7 @@ export class OrderController {
   async paidOrder(
     @Param('id') id: string,
     @UserData('user') user: User,
-    @Body() body?: { discount?: number },
+    @Body() body?: { discount?: number; points?: number },
   ) {
     return this.orderService.paidOrder(id, user, body);
   }

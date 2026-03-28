@@ -6,7 +6,7 @@ import { AppSuccess } from 'src/utils/AppSuccess';
 import { TranslateName } from '../../lib/lib';
 import { OrderStatus, Prisma, Role } from '@prisma/client';
 import { startOfDay, endOfDay } from 'date-fns';
-import { hashedPassword } from 'src/utils/lib';
+import { comparePassword, hashedPassword } from 'src/utils/lib';
 
 @Injectable()
 export class AdminService {
@@ -297,5 +297,14 @@ export class AdminService {
       slotsArray.push(slot);
     }
     return slotsArray;
+  }
+  async CheckPassword(password: string) {
+    const settings = await this.prisma.settings.findFirst({
+      select: { password: true },
+    });
+    if (!password) return { data: false };
+    const valid = await comparePassword(password, settings.password);
+    if (!valid) return { data: false };
+    return { data: true };
   }
 }
