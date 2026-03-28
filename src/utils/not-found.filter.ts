@@ -11,7 +11,7 @@ export class NotFoundFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
 
-    const branch = process.env.BRANCH || 'unknown';
+    const branch = process.env.VERCEL_GIT_COMMIT_REF || 'unknown';
 
     response.status(404).json({
       message: `Cannot GET /`,
