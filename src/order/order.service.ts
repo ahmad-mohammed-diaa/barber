@@ -2029,11 +2029,12 @@ export class OrderService {
 
     if (!currentOrder)
       throw new ConflictException('Order is either PAID or cancelled');
+
     const user = currentOrder.client;
     let pointsDiscount = 0;
     let code: PromoCode;
-
     let total = currentOrder.total;
+
     if (points) {
       if (!settings) throw new NotFoundException('Settings not found');
       const clientPoints = user.client.points ?? 0;
@@ -2067,10 +2068,11 @@ export class OrderService {
     await this.findOneOrFail(id);
 
     if (points) {
+      const pointUsed = Math.floor(points / 1000) * 1000;
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
-          client: { update: { points: { decrement: pointsDiscount * 50 } } },
+          client: { update: { points: { decrement: pointUsed } } },
         },
       });
     }
