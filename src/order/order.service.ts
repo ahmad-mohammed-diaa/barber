@@ -1987,10 +1987,10 @@ export class OrderService {
 
     return new AppSuccess(
       {
-        subTotal: currentOrder.subTotal.toString(),
-        pointsDiscount: pointsDiscount.toString(),
-        discountAmount: discountAmount.toString(),
-        total: total.toString(),
+        subTotal: currentOrder.subTotal,
+        pointsDiscount: pointsDiscount,
+        discountAmount: discountAmount,
+        total: total,
       },
       'Order evaluated successfully',
     );

@@ -126,7 +126,6 @@ export class OrderController {
   @Get('/evaluate-order/:id')
   async evaluateOrder(
     @Param('id') id: string,
-
     @Query('discount') discount?: number,
     @Query('points') points?: number,
   ) {
