@@ -306,6 +306,9 @@ export class OrderService {
     });
     console.log(fetchedOrders);
 
+    const settings = await this.prisma.settings.findFirst();
+    if (!settings) throw new NotFoundException('Settings not found');
+
     const TotalSales = await this.prisma.order.aggregate({
       where: {
         date: { gte: startOfDay(from), lte: endOfDay(to) },
@@ -395,6 +398,7 @@ export class OrderService {
           points: points.toString(),
           usedPackage: packageServices,
           service: services,
+          limit: settings.pointLimit,
         };
       }),
     );
@@ -1977,6 +1981,7 @@ export class OrderService {
 
     return new AppSuccess(updatedOrder, 'Order marked as paid');
   }
+
   async getSlots(date: string, barberId?: string, totalDuration?: number) {
     const EGYPT_TIMEZONE = 'Africa/Cairo';
 
