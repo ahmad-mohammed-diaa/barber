@@ -137,10 +137,9 @@ export class OrderController {
   @Put('/paid-order/:id')
   async paidOrder(
     @Param('id') id: string,
-    @UserData('user') user: User,
     @Body() body?: { discount?: number; points?: number },
   ) {
-    return this.orderService.paidOrder(id, user, body);
+    return this.orderService.paidOrder(id, body);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

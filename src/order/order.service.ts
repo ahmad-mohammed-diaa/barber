@@ -1992,11 +1992,10 @@ export class OrderService {
 
   async paidOrder(
     id: string,
-    userInfo: User,
     body?: { discount?: number; points?: number },
   ) {
     const { discount, points } = body;
-    const [currentOrder, settings, user] = await Promise.all([
+    const [currentOrder, settings] = await Promise.all([
       this.prisma.order.findUnique({
         where: {
           id,
@@ -2016,24 +2015,30 @@ export class OrderService {
             ],
           },
         },
-        select: { subTotal: true, total: true },
+        select: {
+          subTotal: true,
+          total: true,
+          client: {
+            select: {
+              id: true,
+              role: true,
+              client: { select: { points: true } },
+            },
+          },
+        },
       }),
       this.prisma.settings.findFirst(),
-      this.prisma.user.findUnique({
-        where: { id: userInfo.id },
-        include: { client: true },
-      }),
     ]);
 
     if (!currentOrder)
       throw new ConflictException('Order is either PAID or cancelled');
-
+    const user = currentOrder.client;
     let code: PromoCode;
 
     let total = currentOrder.total;
     if (points) {
       if (!settings) throw new NotFoundException('Settings not found');
-      const clientPoints = user.client?.points ?? 0;
+      const clientPoints = user.client.points ?? 0;
       const limitPoints = settings.pointLimit;
       const pointsDiscount = this.validatePoints(
         total,
