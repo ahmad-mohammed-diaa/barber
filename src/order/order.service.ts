@@ -1979,7 +1979,7 @@ export class OrderService {
       if (discount > 100)
         throw new BadRequestException('Discount cannot be greater than 100%');
 
-      discountAmount = (currentOrder.subTotal * discount) / 100;
+      discountAmount = (total * discount) / 100;
       total = total - discountAmount;
     }
 
@@ -2071,7 +2071,7 @@ export class OrderService {
           expiredAt: new Date(Date.now() + 60 * 1000),
         })
         .then((res) => res.data);
-      total = total - (currentOrder.subTotal * code.discount) / 100;
+      total = total - (total * code.discount) / 100;
     }
 
     await this.findOneOrFail(id);

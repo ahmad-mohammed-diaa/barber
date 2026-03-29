@@ -31,17 +31,6 @@ export class OrderController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'CASHIER'])
-  @Get('/evaluate-order/:id')
-  async evaluateOrder(
-    @Param('id') id: string,
-    @Query('discount') discount?: number,
-    @Query('points') points?: number,
-  ) {
-    return this.orderService.evaluateOrder(id, { discount, points });
-  }
-
-  @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(['ADMIN', 'CASHIER'])
   @Get('/getAllOrders')
   async getNewOrders(
     @Lang() lang: Language,
@@ -130,6 +119,17 @@ export class OrderController {
     @Body() updateOrderServicesDto: UpdateOrderServicesDto,
   ) {
     return this.orderService.updateOrderServices(id, updateOrderServicesDto);
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN', 'CASHIER'])
+  @Get('/evaluate-order/:id')
+  async evaluateOrder(
+    @Param('id') id: string,
+    @Query('discount') discount?: number,
+    @Query('points') points?: number,
+  ) {
+    return this.orderService.evaluateOrder(id, { discount, points });
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
