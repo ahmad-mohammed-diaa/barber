@@ -2041,10 +2041,8 @@ export class OrderService {
     if (points) {
       if (!settings) throw new NotFoundException('Settings not found');
 
-      if (points > settings.pointLimit)
-        throw new BadRequestException(
-          `Maximum points limit is ${settings.pointLimit}`,
-        );
+      if (points < 1000)
+        throw new BadRequestException(`Minimum points required is 1000 points`);
       if (points > user.client?.points)
         throw new BadRequestException('Client do not have enough points');
 
