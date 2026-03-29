@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
   ServiceUnavailableException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -34,6 +35,7 @@ interface PrismaServiceType extends Service {
 
 @Injectable()
 export class OrderService {
+  private readonly logger = new Logger(OrderService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly promoCodeService: PromoCodeService,
@@ -678,273 +680,6 @@ export class OrderService {
     return new AppSuccess(order, 'Order fetched successfully');
   }
 
-  // async GetData(
-  //   createOrderDto: CreateOrderDto,
-  //   userId: string,
-  //   lang: Language,
-  // ) {
-  //   const {
-  //     promoCode,
-  //     service,
-  //     slot,
-  //     barberId,
-  //     date,
-  //     branchId,
-  //     usedPackage,
-  //     points,
-  //     phone,
-  //   } = createOrderDto;
-  //   if (points && points <= 0) {
-  //     throw new BadRequestException('You have exceeded the points limit');
-  //   }
-  //   const dateWithoutTime = date.toString().split('T')[0];
-  //   const allServices = [] as PrismaServiceType[];
-
-  //   const another =
-  //     phone &&
-  //     phone !== '' &&
-  //     (await this.prisma.user.findUnique({ where: { phone } }));
-  //   userId = another ? another.id : userId;
-
-  //   // Fetch services early to calculate total duration
-  //   const FetchedServices = await this.prisma.service.findMany({
-  //     where: { id: { in: service } },
-  //   });
-
-  //   // Calculate total duration in minutes for slot validation
-  //   const totalDuration = FetchedServices.reduce(
-  //     (acc, service) => acc + service.duration,
-  //     0,
-  //   );
-
-  //   const [order, usedPromoCode, slots, validPromoCode, user] =
-  //     await Promise.all([
-  //       await this.prisma.order.findFirst({
-  //         where: {
-  //           ...(barberId && { barberId: barberId }),
-  //           date: new Date(dateWithoutTime),
-  //           slot: slot,
-  //           OR: [
-  //             { status: 'PENDING' },
-  //             { status: 'IN_PROGRESS' },
-  //             { booking: 'UPCOMING' },
-  //           ],
-  //         },
-  //       }),
-  //       await this.prisma.user.findFirst({
-  //         where: { id: userId },
-  //         select: {
-  //           client: { select: { points: true } },
-  //           UserOrders: {
-  //             where: {
-  //               promoCode: promoCode,
-  //               status: 'PENDING',
-  //             },
-  //           },
-  //         },
-  //       }),
-  //       barberId
-  //         ? (await this.getSlots(dateWithoutTime, barberId, totalDuration)).data
-  //             .slots
-  //         : [],
-  //       promoCode &&
-  //         (await this.promoCodeService.validatePromoCode(promoCode)).data,
-
-  //       await this.prisma.user.findUnique({
-  //         where: { id: userId },
-  //         select: {
-  //           client: {
-  //             select: {
-  //               ban: true,
-  //               user: {
-  //                 select: { firstName: true, lastName: true, phone: true },
-  //               },
-  //             },
-  //           },
-  //           role: true,
-  //         },
-  //       }),
-  //     ]);
-
-  //   if (phone && !user) {
-  //     throw new NotFoundException('User not found');
-  //   }
-
-  //   const settings = await this.prisma.settings.findFirst({});
-
-  //   if (points && points <= 0 && settings.pointLimit > points) {
-  //     throw new BadRequestException('You have exceeded the points limit');
-  //   }
-
-  //   if (usedPromoCode.UserOrders.length && promoCode)
-  //     throw new ConflictException(
-  //       `Promo code "${promoCode}" is invalid or expired.`,
-  //     );
-
-  //   if (order) throw new ConflictException(`Slot ${slot} is already booked`);
-
-  //   if (barberId && !slots.includes(slot))
-  //     throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
-
-  //   let costServices = [] as PrismaServiceType[];
-  //   if (user?.role === 'USER') {
-  //     const clientPackages = await this.prisma.clientPackages.findMany({
-  //       where: {
-  //         clientId: userId,
-  //         packageService: {
-  //           some: { isActive: true, remainingCount: { gt: 0 } },
-  //         },
-  //       },
-  //       select: {
-  //         id: true,
-  //         type: true,
-  //         isActive: true,
-  //         packageService: {
-  //           select: { service: true },
-  //         },
-  //       },
-  //     });
-
-  //     const selectedPackage = clientPackages.filter((pkg) =>
-  //       usedPackage.includes(pkg.id),
-  //     );
-
-  //     const notValidPackage = selectedPackage.filter((pkg) => !pkg.isActive);
-
-  //     if (notValidPackage.length > 0) {
-  //       throw new BadRequestException('This package is not valid anymore');
-  //     }
-
-  //     const single = clientPackages
-  //       .filter((pkg) => pkg.type === 'SINGLE' && pkg.isActive)
-  //       .flatMap((pkg) =>
-  //         pkg.packageService.flatMap((ps) => {
-  //           return { ...ps.service, pkgId: pkg.id };
-  //         }),
-  //       );
-
-  //     const services = FetchedServices.map((srv) => ({
-  //       ...srv,
-  //       isFree: single.some((s) => s.id === srv.id),
-  //     }));
-
-  //     allServices.push(...services);
-
-  //     for (const pkg of selectedPackage) {
-  //       if (pkg.type === 'SINGLE') {
-  //         throw new ConflictException('Can not select Packages of type SINGLE');
-  //       } else {
-  //         const service = pkg.packageService.flatMap((ps) => {
-  //           return { ...ps.service, isFree: true };
-  //         });
-
-  //         allServices.push(...service);
-  //       }
-  //     }
-
-  //     costServices = allServices.filter((service) => !service.isFree);
-  //   }
-  //   if (user?.role !== 'USER') {
-  //     const services = FetchedServices.map((srv) => ({
-  //       ...srv,
-  //       isFree: false,
-  //     }));
-  //     allServices.push(...services);
-  //     costServices = allServices;
-  //   }
-
-  //   const subTotal = costServices.reduce(
-  //     (acc, service) => acc + service.price,
-  //     0,
-  //   );
-
-  //   // Points validation: minimum 1000 points, conversion rate: 1000 points = 50 EGP
-  //   let pointsDiscount = 0;
-
-  //   if (points) {
-  //     if (points < 1000) {
-  //       throw new BadRequestException('Minimum points required is 1000');
-  //     }
-
-  //     if (points > usedPromoCode?.client?.points) {
-  //       throw new BadRequestException('You do not have enough points');
-  //     }
-
-  //     // Convert points to EGP: every 1000 points = 50 EGP
-  //     pointsDiscount = Math.floor(points / 1000) * 50;
-
-  //     if (pointsDiscount > subTotal) {
-  //       throw new BadRequestException(
-  //         'Points discount cannot exceed the subtotal',
-  //       );
-  //     }
-  //   }
-
-  //   const discount = promoCode
-  //     ? validPromoCode?.type === 'PERCENTAGE'
-  //       ? (subTotal * validPromoCode?.discount) / 100
-  //       : validPromoCode?.discount
-  //     : 0;
-
-  //   const total = Math.max(subTotal - discount - pointsDiscount, 0);
-
-  //   const duration = allServices.reduce(
-  //     (acc, service) => acc + service.duration,
-  //     0,
-  //   );
-
-  //   const now = new Date();
-
-  //   const diffInMs = new Date(dateWithoutTime).getTime() - now.getTime(); // difference in milliseconds
-  //   const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-  //   if (!settings) {
-  //     throw new NotFoundException('Settings not found');
-  //   }
-  //   if (diffInDays >= settings.maxDaysBooking)
-  //     throw new BadRequestException(
-  //       `You can only book up to ${settings.maxDaysBooking} days in advance`,
-  //     );
-
-  //   const discountDisplay =
-  //     promoCode && pointsDiscount > 0
-  //       ? validPromoCode?.type === 'PERCENTAGE'
-  //         ? `${validPromoCode?.discount}% + ${pointsDiscount}EGP`
-  //         : `${discount}EGP + ${pointsDiscount}EGP`
-  //       : promoCode
-  //         ? validPromoCode?.type === 'PERCENTAGE'
-  //           ? `${validPromoCode?.discount}%`
-  //           : `${validPromoCode?.discount}EGP`
-  //         : pointsDiscount > 0
-  //           ? `${pointsDiscount}EGP`
-  //           : '0';
-
-  //   return new AppSuccess(
-  //     {
-  //       date: format(new Date(dateWithoutTime), 'yyyy-MM-dd'),
-  //       slot,
-  //       ...(barberId && { barberId }),
-  //       branchId,
-  //       canUsePoints:
-  //         settings.pointLimit < usedPromoCode?.client?.points ||
-  //         settings.pointLimit > settings.pointLimit + 1,
-  //       points: points?.toString(),
-  //       clientName: `${user?.client?.user?.firstName} ${user?.client?.user?.lastName}`,
-  //       clientPhone: user?.client?.user?.phone,
-  //       createdAt: new Date(),
-  //       updatedAt: null,
-  //       ...(phone && { phone }),
-  //       duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
-  //       promoCode: promoCode ? promoCode : null,
-  //       subTotal: subTotal?.toString(),
-  //       discount: discountDisplay,
-  //       pointsDiscount: pointsDiscount.toString(),
-  //       total: total.toString(),
-  //       limit: settings.pointLimit.toString(),
-  //     },
-  //     'Data fetched successfully',
-  //   );
-  // }
-
   async GetData(
     createOrderDto: CreateOrderDto,
     userId: string,
@@ -961,260 +696,288 @@ export class OrderService {
       points,
       phone,
     } = createOrderDto;
+    try {
+      console.log('GetData - Points:', points);
+      console.log('GetData - Phone:', phone);
+      console.log('GetData - UserId:', userId);
+      console.log('GetData - BarberId:', barberId);
+      console.log('GetData - BranchId:', branchId);
+      console.log('GetData - UsedPackage:', usedPackage);
+      console.log('GetData - Service:', service);
+      console.log('GetData - Slot:', slot);
+      console.log('GetData - Date:', date);
+      console.log('GetData - PromoCode:', promoCode);
 
-    if (points && points <= 0) {
-      throw new BadRequestException('You have exceeded the points limit');
-    }
+      if (points && points <= 0) {
+        throw new BadRequestException('You have exceeded the points limit');
+      }
+      const dateWithoutTime = date.toString().split('T')[0];
+      const allServices = [] as PrismaServiceType[];
 
-    const dateWithoutTime = date.toString().split('T')[0];
-    const allServices = [] as PrismaServiceType[];
+      const another =
+        phone &&
+        phone !== '' &&
+        (await this.prisma.user.findUnique({ where: { phone } }));
+      userId = another ? another.id : userId;
 
-    const another =
-      phone &&
-      phone !== '' &&
-      (await this.prisma.user.findUnique({ where: { phone } }));
+      // Fetch services early to calculate total duration
+      const FetchedServices = await this.prisma.service.findMany({
+        where: { id: { in: service } },
+      });
 
-    // ✅ Keep cashier's own id — only the CLIENT lookup uses another.id
-    const cashierUserId = userId;
-    const clientUserId = another ? another.id : userId;
+      // Calculate total duration in minutes for slot validation
+      const totalDuration = FetchedServices.reduce(
+        (acc, service) => acc + service.duration,
+        0,
+      );
 
-    const FetchedServices = await this.prisma.service.findMany({
-      where: { id: { in: service } },
-    });
-
-    const totalDuration = FetchedServices.reduce(
-      (acc, s) => acc + s.duration,
-      0,
-    );
-
-    const [order, usedPromoCode, slots, validPromoCode, user] =
-      await Promise.all([
-        this.prisma.order.findFirst({
-          where: {
-            ...(barberId && { barberId }),
-            date: new Date(dateWithoutTime),
-            slot,
-            OR: [
-              { status: 'PENDING' },
-              { status: 'IN_PROGRESS' },
-              { booking: 'UPCOMING' },
-            ],
-          },
-        }),
-
-        // ✅ Client's points & promo history
-        this.prisma.user.findFirst({
-          where: { id: clientUserId },
-          select: {
-            client: { select: { points: true } },
-            UserOrders: {
-              where: { promoCode, status: 'PENDING' },
+      const [order, usedPromoCode, slots, validPromoCode, user] =
+        await Promise.all([
+          await this.prisma.order.findFirst({
+            where: {
+              ...(barberId && { barberId: barberId }),
+              date: new Date(dateWithoutTime),
+              slot: slot,
+              OR: [
+                { status: 'PENDING' },
+                { status: 'IN_PROGRESS' },
+                { booking: 'UPCOMING' },
+              ],
             },
-          },
-        }),
-
-        barberId
-          ? (await this.getSlots(dateWithoutTime, barberId, totalDuration)).data
-              .slots
-          : [],
-
-        promoCode &&
-          (await this.promoCodeService.validatePromoCode(promoCode)).data,
-
-        // ✅ Cashier's role — always read from cashier's account
-        this.prisma.user.findUnique({
-          where: { id: cashierUserId },
-          select: {
-            client: {
-              select: {
-                ban: true,
-                user: {
-                  select: { firstName: true, lastName: true, phone: true },
+          }),
+          await this.prisma.user.findFirst({
+            where: { id: userId },
+            select: {
+              client: { select: { points: true } },
+              UserOrders: {
+                where: {
+                  promoCode: promoCode,
+                  status: 'PENDING',
                 },
               },
             },
-            role: true,
-          },
-        }),
-      ]);
+          }),
+          barberId
+            ? (await this.getSlots(dateWithoutTime, barberId, totalDuration))
+                .data.slots
+            : [],
+          promoCode &&
+            (await this.promoCodeService.validatePromoCode(promoCode)).data,
 
-    if (phone && !another) {
-      throw new NotFoundException('User not found');
-    }
+          await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+              client: {
+                select: {
+                  ban: true,
+                  user: {
+                    select: { firstName: true, lastName: true, phone: true },
+                  },
+                },
+              },
+              role: true,
+            },
+          }),
+        ]);
 
-    const isCashierRole = user?.role === 'CASHIER'; // ✅ now correctly the cashier's role
-
-    if (isCashierRole && points) {
-      if (!phone || !another) {
-        throw new BadRequestException(
-          'A registered client phone is required to apply points as a cashier',
-        );
-      }
-    }
-
-    const settings = await this.prisma.settings.findFirst({});
-    if (!settings) throw new NotFoundException('Settings not found');
-
-    if (points && points <= 0 && settings.pointLimit > points) {
-      throw new BadRequestException('You have exceeded the points limit');
-    }
-
-    if (usedPromoCode.UserOrders.length && promoCode) {
-      throw new ConflictException(
-        `Promo code "${promoCode}" is invalid or expired.`,
-      );
-    }
-
-    if (order) throw new ConflictException(`Slot ${slot} is already booked`);
-
-    if (barberId && !slots.includes(slot))
-      throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
-
-    let costServices = [] as PrismaServiceType[];
-
-    if (user?.role === 'USER' || isCashierRole) {
-      // ✅ Packages always looked up against the CLIENT
-      const clientPackages = await this.prisma.clientPackages.findMany({
-        where: {
-          clientId: clientUserId,
-          packageService: {
-            some: { isActive: true, remainingCount: { gt: 0 } },
-          },
-        },
-        select: {
-          id: true,
-          type: true,
-          isActive: true,
-          packageService: { select: { service: true } },
-        },
-      });
-
-      const selectedPackage = clientPackages.filter((pkg) =>
-        usedPackage.includes(pkg.id),
-      );
-
-      const notValidPackage = selectedPackage.filter((pkg) => !pkg.isActive);
-      if (notValidPackage.length > 0) {
-        throw new BadRequestException('This package is not valid anymore');
+      if (phone && !user) {
+        throw new NotFoundException('User not found');
       }
 
-      const single = clientPackages
-        .filter((pkg) => pkg.type === 'SINGLE' && pkg.isActive)
-        .flatMap((pkg) =>
-          pkg.packageService.flatMap((ps) => ({
-            ...ps.service,
-            pkgId: pkg.id,
-          })),
+      const settings = await this.prisma.settings.findFirst({});
+
+      if (points && points <= 0 && settings.pointLimit > points) {
+        throw new BadRequestException('You have exceeded the points limit');
+      }
+
+      if (usedPromoCode.UserOrders.length && promoCode)
+        throw new ConflictException(
+          `Promo code "${promoCode}" is invalid or expired.`,
         );
 
-      const services = FetchedServices.map((srv) => ({
-        ...srv,
-        isFree: single.some((s) => s.id === srv.id),
-      }));
-      allServices.push(...services);
+      if (order) throw new ConflictException(`Slot ${slot} is already booked`);
 
-      for (const pkg of selectedPackage) {
-        if (pkg.type === 'SINGLE') {
-          throw new ConflictException('Can not select Packages of type SINGLE');
+      if (barberId && !slots.includes(slot))
+        throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
+
+      let costServices = [] as PrismaServiceType[];
+      if (user?.role === 'USER') {
+        const clientPackages = await this.prisma.clientPackages.findMany({
+          where: {
+            clientId: userId,
+            packageService: {
+              some: { isActive: true, remainingCount: { gt: 0 } },
+            },
+          },
+          select: {
+            id: true,
+            type: true,
+            isActive: true,
+            packageService: {
+              select: { service: true },
+            },
+          },
+        });
+
+        const selectedPackage = clientPackages.filter((pkg) =>
+          usedPackage.includes(pkg.id),
+        );
+
+        const notValidPackage = selectedPackage.filter((pkg) => !pkg.isActive);
+
+        if (notValidPackage.length > 0) {
+          throw new BadRequestException('This package is not valid anymore');
         }
-        const service = pkg.packageService.flatMap((ps) => ({
-          ...ps.service,
-          isFree: true,
+
+        const single = clientPackages
+          .filter((pkg) => pkg.type === 'SINGLE' && pkg.isActive)
+          .flatMap((pkg) =>
+            pkg.packageService.flatMap((ps) => {
+              return { ...ps.service, pkgId: pkg.id };
+            }),
+          );
+
+        const services = FetchedServices.map((srv) => ({
+          ...srv,
+          isFree: single.some((s) => s.id === srv.id),
         }));
-        allServices.push(...service);
+
+        allServices.push(...services);
+
+        for (const pkg of selectedPackage) {
+          if (pkg.type === 'SINGLE') {
+            throw new ConflictException(
+              'Can not select Packages of type SINGLE',
+            );
+          } else {
+            const service = pkg.packageService.flatMap((ps) => {
+              return { ...ps.service, isFree: true };
+            });
+
+            allServices.push(...service);
+          }
+        }
+
+        costServices = allServices.filter((service) => !service.isFree);
+      }
+      if (user?.role !== 'USER') {
+        const services = FetchedServices.map((srv) => ({
+          ...srv,
+          isFree: false,
+        }));
+        allServices.push(...services);
+        costServices = allServices;
       }
 
-      costServices = allServices.filter((s) => !s.isFree);
-    } else {
-      const services = FetchedServices.map((srv) => ({
-        ...srv,
-        isFree: false,
-      }));
-      allServices.push(...services);
-      costServices = allServices;
-    }
-
-    const subTotal = costServices.reduce((acc, s) => acc + s.price, 0);
-
-    let pointsDiscount = 0;
-    if (points) {
-      if (points < 1000) {
-        throw new BadRequestException('Minimum points required is 1000');
-      }
-      // ✅ Validated against CLIENT's points balance
-      if (points > (usedPromoCode?.client?.points ?? 0)) {
-        throw new BadRequestException('You do not have enough points');
-      }
-      pointsDiscount = Math.floor(points / 1000) * 50;
-      if (pointsDiscount > subTotal) {
-        throw new BadRequestException(
-          'Points discount cannot exceed the subtotal',
-        );
-      }
-    }
-
-    const discount = promoCode
-      ? validPromoCode?.type === 'PERCENTAGE'
-        ? (subTotal * validPromoCode.discount) / 100
-        : validPromoCode.discount
-      : 0;
-
-    const total = Math.max(subTotal - discount - pointsDiscount, 0);
-    const duration = allServices.reduce((acc, s) => acc + s.duration, 0);
-
-    const diffInMs = new Date(dateWithoutTime).getTime() - new Date().getTime();
-    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-
-    if (diffInDays >= settings.maxDaysBooking) {
-      throw new BadRequestException(
-        `You can only book up to ${settings.maxDaysBooking} days in advance`,
+      const subTotal = costServices.reduce(
+        (acc, service) => acc + service.price,
+        0,
       );
-    }
 
-    const discountDisplay =
-      promoCode && pointsDiscount > 0
+      // Points validation: minimum 1000 points, conversion rate: 1000 points = 50 EGP
+      let pointsDiscount = 0;
+
+      if (points) {
+        if (points < 1000) {
+          throw new BadRequestException('Minimum points required is 1000');
+        }
+
+        if (points > usedPromoCode?.client?.points) {
+          throw new BadRequestException('You do not have enough points');
+        }
+
+        // Convert points to EGP: every 1000 points = 50 EGP
+        pointsDiscount = Math.floor(points / 1000) * 50;
+
+        if (pointsDiscount > subTotal) {
+          throw new BadRequestException(
+            'Points discount cannot exceed the subtotal',
+          );
+        }
+      }
+
+      const discount = promoCode
         ? validPromoCode?.type === 'PERCENTAGE'
-          ? `${validPromoCode.discount}% + ${pointsDiscount}EGP`
-          : `${discount}EGP + ${pointsDiscount}EGP`
-        : promoCode
+          ? (subTotal * validPromoCode?.discount) / 100
+          : validPromoCode?.discount
+        : 0;
+
+      const total = Math.max(subTotal - discount - pointsDiscount, 0);
+
+      const duration = allServices.reduce(
+        (acc, service) => acc + service.duration,
+        0,
+      );
+
+      const now = new Date();
+
+      const diffInMs = new Date(dateWithoutTime).getTime() - now.getTime(); // difference in milliseconds
+      const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+      if (!settings) {
+        throw new NotFoundException('Settings not found');
+      }
+      if (diffInDays >= settings.maxDaysBooking)
+        throw new BadRequestException(
+          `You can only book up to ${settings.maxDaysBooking} days in advance`,
+        );
+
+      const discountDisplay =
+        promoCode && pointsDiscount > 0
           ? validPromoCode?.type === 'PERCENTAGE'
-            ? `${validPromoCode.discount}%`
-            : `${validPromoCode.discount}EGP`
-          : pointsDiscount > 0
-            ? `${pointsDiscount}EGP`
-            : '0';
+            ? `${validPromoCode?.discount}% + ${pointsDiscount}EGP`
+            : `${discount}EGP + ${pointsDiscount}EGP`
+          : promoCode
+            ? validPromoCode?.type === 'PERCENTAGE'
+              ? `${validPromoCode?.discount}%`
+              : `${validPromoCode?.discount}EGP`
+            : pointsDiscount > 0
+              ? `${pointsDiscount}EGP`
+              : '0';
 
-    // ✅ clientName/clientPhone pulled from the CLIENT's record
-    const clientInfo = await this.prisma.user.findUnique({
-      where: { id: clientUserId },
-      select: { firstName: true, lastName: true, phone: true },
-    });
-
-    return new AppSuccess(
-      {
-        date: format(new Date(dateWithoutTime), 'yyyy-MM-dd'),
-        slot,
-        ...(barberId && { barberId }),
-        branchId,
-        canUsePoints:
-          settings.pointLimit < (usedPromoCode?.client?.points ?? 0),
-        points: points?.toString(),
-        clientPoints: usedPromoCode?.client?.points ?? 0,
-        clientName: `${clientInfo?.firstName} ${clientInfo?.lastName}`,
-        clientPhone: clientInfo?.phone,
-        createdAt: new Date(),
-        updatedAt: null,
-        ...(phone && { phone }),
-        duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
-        promoCode: promoCode ?? null,
-        subTotal: subTotal.toString(),
-        discount: discountDisplay,
-        pointsDiscount: pointsDiscount.toString(),
-        total: total.toString(),
-        limit: settings.pointLimit.toString(),
-      },
-      'Data fetched successfully',
-    );
+      return new AppSuccess(
+        {
+          date: format(new Date(dateWithoutTime), 'yyyy-MM-dd'),
+          slot,
+          ...(barberId && { barberId }),
+          branchId,
+          canUsePoints:
+            settings.pointLimit < usedPromoCode?.client?.points ||
+            settings.pointLimit > settings.pointLimit + 1,
+          points: points?.toString(),
+          clientName: `${user?.client?.user?.firstName} ${user?.client?.user?.lastName}`,
+          clientPhone: user?.client?.user?.phone,
+          createdAt: new Date(),
+          updatedAt: null,
+          ...(phone && { phone }),
+          duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
+          promoCode: promoCode ? promoCode : null,
+          subTotal: subTotal?.toString(),
+          discount: discountDisplay,
+          pointsDiscount: pointsDiscount.toString(),
+          total: total.toString(),
+          limit: settings.pointLimit.toString(),
+        },
+        'Data fetched successfully',
+      );
+    } catch (error) {
+      this.logger.error('Error in GetData:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      if (error instanceof ServiceUnavailableException) {
+        throw error;
+      }
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to get data');
+    }
   }
 
   async createOrder(
