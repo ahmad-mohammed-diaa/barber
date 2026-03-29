@@ -1914,6 +1914,7 @@ export class OrderService {
     userInfo: User,
     body?: { discount?: number; points?: number },
   ) {
+    const { discount, points } = body;
     const [currentOrder, settings, user] = await Promise.all([
       this.prisma.order.findUnique({
         where: {
@@ -1950,8 +1951,7 @@ export class OrderService {
 
     let total = currentOrder.total;
 
-    if (body && body.points) {
-      const points = body.points;
+    if (points) {
       if (!settings) throw new NotFoundException('Settings not found');
 
       if (points > settings.pointLimit)
@@ -1967,19 +1967,21 @@ export class OrderService {
       if (!Number.isInteger(Number(points))) {
         throw new Error('Points must be a whole number');
       }
-      total = total - points;
+
+      const pointsDiscount = Math.floor(points / 1000) * 50;
+      total = total - pointsDiscount;
     }
 
-    if (body && body.discount) {
-      if (body.discount < 0)
+    if (discount) {
+      if (discount < 0)
         throw new BadRequestException('Discount cannot be negative');
 
-      if (body.discount > 100)
+      if (discount > 100)
         throw new BadRequestException('Discount cannot be greater than 100%');
       code = await this.promoCodeService
         .createPromoCode({
           code: undefined,
-          discount: body.discount,
+          discount: discount,
           type: 'PERCENTAGE',
           expiredAt: new Date(Date.now() + 60 * 1000),
         })
@@ -1988,6 +1990,15 @@ export class OrderService {
     }
 
     await this.findOneOrFail(id);
+
+    if (points) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          client: { update: { points: { decrement: points } } },
+        },
+      });
+    }
 
     const updatedOrder = await this.prisma.order.update({
       where: { id },
