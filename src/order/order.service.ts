@@ -697,17 +697,6 @@ export class OrderService {
       phone,
     } = createOrderDto;
     try {
-      console.log('GetData - Points:', points);
-      console.log('GetData - Phone:', phone);
-      console.log('GetData - UserId:', userId);
-      console.log('GetData - BarberId:', barberId);
-      console.log('GetData - BranchId:', branchId);
-      console.log('GetData - UsedPackage:', usedPackage);
-      console.log('GetData - Service:', service);
-      console.log('GetData - Slot:', slot);
-      console.log('GetData - Date:', date);
-      console.log('GetData - PromoCode:', promoCode);
-
       if (points && points <= 0) {
         throw new BadRequestException('You have exceeded the points limit');
       }
@@ -960,7 +949,14 @@ export class OrderService {
         'Data fetched successfully',
       );
     } catch (error) {
-      this.logger.error('Error in GetData:', error);
+      this.logger.error('Error in GetData:', {
+        error: error.message,
+        stack: error.stack,
+        name: error.name,
+        cause: error.cause,
+        code: error.code,
+        status: error.status,
+      });
       if (error instanceof BadRequestException) {
         throw error;
       }
