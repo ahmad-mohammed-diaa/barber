@@ -1909,6 +1909,93 @@ export class OrderService {
     });
   }
 
+  async evaluateOrder(
+    id: string,
+    query?: { discount?: number; points?: number },
+  ) {
+    const { discount, points } = query ?? {};
+
+    const [currentOrder, settings] = await Promise.all([
+      this.prisma.order.findUnique({
+        where: {
+          id,
+          NOT: {
+            OR: [
+              { status: OrderStatus.PAID },
+              {
+                status: {
+                  in: [
+                    OrderStatus.ADMIN_CANCELLED,
+                    OrderStatus.CLIENT_CANCELLED,
+                    OrderStatus.BARBER_CANCELLED,
+                    OrderStatus.CASHIER_CANCELLED,
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        select: { subTotal: true, total: true, userId: true },
+      }),
+      this.prisma.settings.findFirst(),
+    ]);
+
+    if (!currentOrder)
+      throw new ConflictException('Order is either PAID or cancelled');
+
+    const orderClient = currentOrder.userId
+      ? await this.prisma.client.findUnique({
+          where: { id: currentOrder.userId },
+        })
+      : null;
+
+    let total = currentOrder.total;
+    let pointsDiscount = 0;
+    let discountAmount = 0;
+
+    if (points) {
+      if (!settings) throw new NotFoundException('Settings not found');
+
+      if (points < 0)
+        throw new BadRequestException('Points cannot be negative');
+
+      if (!Number.isInteger(Number(points)))
+        throw new BadRequestException('Points must be a whole number');
+
+      if (points < 1000)
+        throw new BadRequestException(`Minimum points required is 1000 points`);
+
+      if (points > (orderClient?.points ?? 0))
+        throw new BadRequestException('Client does not have enough points');
+
+      pointsDiscount = Math.floor(points / 1000) * 50;
+      total = total - pointsDiscount;
+    }
+
+    if (discount) {
+      if (discount < 0)
+        throw new BadRequestException('Discount cannot be negative');
+
+      if (discount > 100)
+        throw new BadRequestException('Discount cannot be greater than 100%');
+
+      discountAmount = (currentOrder.subTotal * discount) / 100;
+      total = total - discountAmount;
+    }
+
+    total = Math.max(total, 0);
+
+    return new AppSuccess(
+      {
+        subTotal: currentOrder.subTotal.toString(),
+        pointsDiscount: pointsDiscount.toString(),
+        discountAmount: discountAmount.toString(),
+        total: total.toString(),
+      },
+      'Order evaluated successfully',
+    );
+  }
+
   async paidOrder(
     id: string,
     userInfo: User,

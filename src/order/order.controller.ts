@@ -123,6 +123,18 @@ export class OrderController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'CASHIER'])
+  @Get('/evaluate-order/:id')
+  async evaluateOrder(
+    @Param('id') id: string,
+
+    @Query('discount') discount?: number,
+    @Query('points') points?: number,
+  ) {
+    return this.orderService.evaluateOrder(id, { discount, points });
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN', 'CASHIER'])
   @Put('/paid-order/:id')
   async paidOrder(
     @Param('id') id: string,
