@@ -1955,20 +1955,14 @@ export class OrderService {
 
     if (points) {
       if (!settings) throw new NotFoundException('Settings not found');
-
-      if (points < 0)
-        throw new BadRequestException('Points cannot be negative');
-
-      if (!Number.isInteger(Number(points)))
-        throw new BadRequestException('Points must be a whole number');
-
-      if (points < 1000)
-        throw new BadRequestException(`Minimum points required is 1000 points`);
-
-      if (points > (orderClient?.points ?? 0))
-        throw new BadRequestException('Client does not have enough points');
-
-      pointsDiscount = Math.floor(points / 1000) * 50;
+      const clientPoints = orderClient?.points ?? 0;
+      const limitPoints = settings.pointLimit;
+      pointsDiscount = this.validatePoints(
+        total,
+        points,
+        clientPoints,
+        limitPoints,
+      );
       total = total - pointsDiscount;
     }
 
@@ -2037,23 +2031,16 @@ export class OrderService {
     let code: PromoCode;
 
     let total = currentOrder.total;
-
     if (points) {
       if (!settings) throw new NotFoundException('Settings not found');
-
-      if (points < 1000)
-        throw new BadRequestException(`Minimum points required is 1000 points`);
-      if (points > user.client?.points)
-        throw new BadRequestException('Client do not have enough points');
-
-      if (points < 0)
-        throw new BadRequestException('Points cannot be negative');
-
-      if (!Number.isInteger(Number(points))) {
-        throw new Error('Points must be a whole number');
-      }
-
-      const pointsDiscount = Math.floor(points / 1000) * 50;
+      const clientPoints = user.client?.points ?? 0;
+      const limitPoints = settings.pointLimit;
+      const pointsDiscount = this.validatePoints(
+        total,
+        points,
+        clientPoints,
+        limitPoints,
+      );
       total = total - pointsDiscount;
     }
 
@@ -2503,5 +2490,39 @@ export class OrderService {
       clientName: `${client.firstName} ${client.lastName}`,
       clientPhone: client.phone,
     };
+  }
+
+  private validatePoints(
+    total: number,
+    points: number,
+    clientPoints: number,
+    limitPoints: number,
+  ) {
+    if (points < 0) throw new BadRequestException('Points cannot be negative');
+    if (!Number.isInteger(points))
+      throw new BadRequestException('Points must be a whole number');
+
+    if (points < 0) throw new BadRequestException('Points cannot be negative');
+
+    if (!Number.isInteger(Number(points)))
+      throw new BadRequestException('Points must be a whole number');
+
+    if (points < limitPoints)
+      throw new BadRequestException(
+        `Minimum points required is ${limitPoints} points`,
+      );
+
+    if (points > (clientPoints ?? 0))
+      throw new BadRequestException('Client does not have enough points');
+    const maxPointsDiscount = total * 0.4; // 40% of total
+    const pointsDiscount = Math.floor(points / 1000) * 50;
+
+    if (pointsDiscount > maxPointsDiscount) {
+      throw new BadRequestException(
+        `Points discount cannot exceed 40% of total (${maxPointsDiscount})`,
+      );
+    }
+
+    return pointsDiscount;
   }
 }
