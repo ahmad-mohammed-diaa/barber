@@ -2518,9 +2518,6 @@ export class OrderService {
     if (!Number.isInteger(Number(points)))
       throw new BadRequestException('Points must be a whole number');
 
-    if (points % 1000 !== 0)
-      throw new BadRequestException('Points must be a multiple of 1000');
-
     if (points < limitPoints)
       throw new BadRequestException(
         `Minimum points required is ${limitPoints} points`,
