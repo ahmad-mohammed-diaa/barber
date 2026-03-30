@@ -1492,7 +1492,7 @@ export class OrderService {
     const multiPackages = clientPackages.filter(
       (pkg) => pkg.type === 'MULTIPLE',
     );
-    let total = order.total;
+    let subTotal = order.subTotal;
 
     for (const serviceId of add ?? []) {
       const singlePackageService = singlePackages
@@ -1513,14 +1513,14 @@ export class OrderService {
             where: { id: serviceId },
             select: { price: true },
           });
-          total += service.price;
+          subTotal += service.price;
         }
       } else {
         const service = await this.prisma.service.findUnique({
           where: { id: serviceId },
           select: { price: true },
         });
-        total += service.price;
+        subTotal += service.price;
       }
     }
 
@@ -1546,7 +1546,7 @@ export class OrderService {
             select: { price: true },
           });
 
-          total -= service.price;
+          subTotal -= service.price;
         } else {
           await this.prisma.packagesServices.update({
             where: { id: singlePackageService.id },
@@ -1556,16 +1556,22 @@ export class OrderService {
             where: { id: singlePackageService.serviceId },
             select: { price: true },
           });
-          total -= service.price;
+          subTotal -= service.price;
         }
       } else {
         const service = await this.prisma.service.findUnique({
           where: { id: serviceId },
           select: { price: true },
         });
-        total -= service.price;
+        subTotal -= service.price;
       }
     }
+
+    const discount =
+      order.type === 'PERCENTAGE'
+        ? (order.discount * subTotal) / 100
+        : order.discount;
+    const total = Math.max(subTotal - discount, 0);
 
     if (
       Array.isArray(removePackage) &&
@@ -1608,7 +1614,7 @@ export class OrderService {
       data: {
         ...rest,
         ...(barberId && { barberId }),
-        subTotal: order.subTotal,
+        subTotal,
         total,
         service: {
           connect: (add ?? []).map((id) => ({ id })),
@@ -2070,7 +2076,7 @@ export class OrderService {
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
-          client: { update: { points: { decrement: pointsDiscount * 50 } } },
+          client: { update: { points: { decrement: points } } },
         },
       });
     }
@@ -2509,6 +2515,9 @@ export class OrderService {
 
     if (!Number.isInteger(Number(points)))
       throw new BadRequestException('Points must be a whole number');
+
+    if (points % 1000 !== 0)
+      throw new BadRequestException('Points must be a multiple of 1000');
 
     if (points < limitPoints)
       throw new BadRequestException(
