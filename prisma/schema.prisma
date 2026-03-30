@@ -79,13 +79,15 @@ model BarberRating {
   barberId  String
   clientId  String
   rate      Int
+  orderId   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   barber Barber @relation(fields: [barberId], references: [id])
   client Client @relation(fields: [clientId], references: [id])
+  order  Order  @relation(fields: [orderId], references: [id])
 
-  @@unique([barberId, clientId])
+  @@unique([barberId, clientId, orderId])
   @@index([barberId, clientId])
 }
 
@@ -165,8 +167,8 @@ model questions {
 }
 
 model Token {
-  id        String   @id @default(uuid())
-  token     String   @unique
+  id        String    @id @default(uuid())
+  token     String    @unique
   expiredAt DateTime?
 }
 
@@ -322,14 +324,15 @@ model Order {
   servicesToDelete        String[]
   reminderSent            Boolean  @default(false)
 
-  booking BookingStatus @default(UPCOMING)
-  type    discount      @default(AMOUNT)
-  status  OrderStatus   @default(PENDING)
-  branch  Branch        @relation(fields: [branchId], references: [id])
-  client  User?         @relation("UserOrders", fields: [userId], references: [id])
-  barber  User?         @relation("BarberOrders", fields: [barberId], references: [id])
-  Cashier User?         @relation("CashierOrders", fields: [cashierId], references: [id])
-  service Service[]     @relation("OrderToServices")
+  booking       BookingStatus  @default(UPCOMING)
+  type          discount       @default(AMOUNT)
+  status        OrderStatus    @default(PENDING)
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  client        User?          @relation("UserOrders", fields: [userId], references: [id])
+  barber        User?          @relation("BarberOrders", fields: [barberId], references: [id])
+  Cashier       User?          @relation("CashierOrders", fields: [cashierId], references: [id])
+  service       Service[]      @relation("OrderToServices")
+  barberRatings BarberRating[]
 
   @@index([barberId, date])
   @@index([userId, date])
