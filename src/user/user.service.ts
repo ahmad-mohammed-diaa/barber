@@ -1,5 +1,9 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BookingStatus, OrderStatus, Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
@@ -614,7 +618,12 @@ export class UserService {
     return latestOrder?.date || null;
   }
 
-  async rateBarber(clientId: string, barberId: string, rate: number) {
+  async rateBarber(
+    clientId: string,
+    barberId: string,
+    orderId: string,
+    rate: number,
+  ) {
     // 1. Verify barber exists
     const barber = await this.prisma.barber.findUnique({
       where: { id: barberId },
@@ -625,27 +634,35 @@ export class UserService {
 
     if (!barber) throw new NotFoundException('Barber not found');
 
-    // 2. Verify client completed an order with this barber
+    // 2. Verify the order belongs to this client, is with this barber, and is completed
     // const completedOrder = await this.prisma.order.findFirst({
     //   where: {
-    //     client: { id: clientId },
+    //     id: orderId,
+    //     userId: clientId,
     //     barberId,
-    //     status: { in: [OrderStatus.COMPLETED, OrderStatus.PAID] },
+    //     status: { in: ['COMPLETED', 'PAID'] },
     //     deleted: false,
     //   },
     // });
 
     // if (!completedOrder) {
-    //   throw new ForbiddenException(
-    //     'You must complete an order with this barber before rating.',
+    //   throw new NotFoundException(
+    //     'No completed order found for this barber and client',
     //   );
     // }
 
-    // 3. Upsert rating (create or update)
-    await this.prisma.barberRating.upsert({
-      where: { barberId_clientId: { barberId, clientId } },
-      update: { rate },
-      create: { barberId, clientId, rate },
+    // 3. Check if this order was already rated
+    const existingRating = await this.prisma.barberRating.findUnique({
+      where: { barberId_clientId_orderId: { barberId, clientId, orderId } },
+    });
+
+    if (existingRating) {
+      throw new ConflictException('This order has already been rated');
+    }
+
+    // 4. Create new rating row
+    await this.prisma.barberRating.create({
+      data: { barberId, clientId, orderId, rate },
     });
 
     // 4. Recalculate average rating

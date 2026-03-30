@@ -6,6 +6,10 @@ export class RateBarberDto {
   barberId: string;
 
   @IsNotEmpty()
+  @IsString()
+  orderId: string;
+
+  @IsNotEmpty()
   @IsInt()
   @Min(1)
   @Max(5)
