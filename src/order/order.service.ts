@@ -386,7 +386,7 @@ export class OrderService {
           date: format(new Date(date), 'yyyy-MM-dd'),
           status,
           clientPoints: order.client?.client?.points ?? 0,
-
+          branchId: order.branchId,
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
           barberUserName: barber
             ? `${barber.barber.user.firstName} ${barber.barber.user.lastName}`
