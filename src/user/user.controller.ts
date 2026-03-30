@@ -99,6 +99,7 @@ export class UserController {
     return this.userService.rateBarber(
       user.id,
       rateBarberDto.barberId,
+      rateBarberDto.orderId,
       rateBarberDto.rating,
     );
   }
