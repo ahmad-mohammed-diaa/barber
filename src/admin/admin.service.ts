@@ -51,7 +51,7 @@ export class AdminService {
 
     const settingsData = {
       ...rest,
-      ...(password && { password: await hashedPassword(password) }),
+      ...(password?.trim() && { password: await hashedPassword(password) }),
     } as Prisma.SettingsUpsertArgs['create'] &
       Prisma.SettingsUpsertArgs['update'];
 
