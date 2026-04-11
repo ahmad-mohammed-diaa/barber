@@ -295,7 +295,17 @@ export class OrderService {
     const fetchedOrders = await this.prisma.order.findMany({
       where: {
         branchId: cashier.branchId,
-        NOT: { status: { in: [OrderStatus.PAID] } },
+        NOT: {
+          status: {
+            in: [
+              OrderStatus.PAID,
+              OrderStatus.ADMIN_CANCELLED,
+              OrderStatus.CLIENT_CANCELLED,
+              OrderStatus.BARBER_CANCELLED,
+              OrderStatus.CASHIER_CANCELLED,
+            ],
+          },
+        },
         date: { gte: startOfDay(from), lte: endOfDay(to) },
       },
       include: {
