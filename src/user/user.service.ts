@@ -46,7 +46,6 @@ export class UserService {
     Slot: {
       select: {
         id: true,
-        isAvailable: true,
         start: true,
         end: true,
         slot: true,
@@ -57,6 +56,7 @@ export class UserService {
     rate: true,
     type: true,
     vacations: true,
+    isAvailable: true,
   } as Prisma.BarberSelect;
 
   private cashier = {
@@ -332,6 +332,172 @@ export class UserService {
 
     return new AppSuccess(updateUser, 'User updated successfully', 200);
   }
+
+  // public async updateUser(
+  //   id: string,
+  //   userData: UserUpdateDto,
+  //   file?: Express.Multer.File,
+  // ) {
+  //   const user = await this.findOne(id);
+  //   if (!user) throw new NotFoundException('User not found');
+  //   const { vacations, vacationsToDelete, type, start, end, ...rest } =
+  //     userData;
+  //   const roleKey =
+  //     user.role === Role.USER ? 'client' : user.role.toLowerCase();
+  //   const avatar = file?.path;
+
+  //   // For barbers updating their slots, check if they have future orders
+  //   let effectiveSlotDate: Date | null = null;
+  //   let shouldUpdateImmediately = true;
+
+  //   if (user.role === Role.BARBER && (start || end)) {
+  //     // Check if barber's current slot is empty
+  //     const barberSlot = await this.prisma.slot.findFirst({
+  //       where: { barberId: user.id },
+  //       select: { slot: true, start: true, end: true },
+  //     });
+
+  //     const isSlotEmpty =
+  //       !barberSlot || !barberSlot.slot || barberSlot.slot.length === 0;
+
+  //     if (isSlotEmpty) {
+  //       // Slot is empty, update immediately
+  //       shouldUpdateImmediately = true;
+  //       effectiveSlotDate = null;
+  //     } else {
+  //       const currentStart = barberSlot.start;
+  //       const currentEnd = barberSlot.end;
+  //       const newStart = start ?? currentStart;
+  //       const newEnd = end ?? currentEnd;
+
+  //       // If the new range fully covers the existing range, all booked slots remain valid
+  //       const isExpanding = newStart <= currentStart && newEnd >= currentEnd;
+
+  //       if (isExpanding) {
+  //         shouldUpdateImmediately = true;
+  //         effectiveSlotDate = null;
+  //       } else {
+  //         const latestOrderDate = await this.getLatestOrderDate(user.id);
+
+  //         if (latestOrderDate) {
+  //           const today = new Date();
+  //           today.setHours(0, 0, 0, 0);
+
+  //           const latestOrderDateOnly = new Date(latestOrderDate);
+  //           latestOrderDateOnly.setHours(0, 0, 0, 0);
+
+  //           // If last order day < today, update immediately
+  //           if (latestOrderDateOnly < today) {
+  //             shouldUpdateImmediately = true;
+  //             effectiveSlotDate = null;
+  //           } else {
+  //             // Set effective slot date to the day after the last order
+  //             effectiveSlotDate = addDays(latestOrderDateOnly, 1);
+  //             shouldUpdateImmediately = false;
+  //           }
+  //         } else {
+  //           // No future orders, update immediately
+  //           shouldUpdateImmediately = true;
+  //           effectiveSlotDate = null;
+  //         }
+  //       }
+  //     }
+  //   }
+
+  //   const updateUser = await this.prisma.user.update({
+  //     where: { id },
+  //     data: {
+  //       ...rest,
+  //       ...(avatar && { avatar }),
+  //       ...((vacations || vacationsToDelete || start || end || type) &&
+  //         user.role !== Role.USER && {
+  //           [roleKey]: {
+  //             update: {
+  //               ...((vacationsToDelete || vacations) && {
+  //                 vacations: {
+  //                   ...(vacationsToDelete && {
+  //                     deleteMany: {
+  //                       id: { in: vacationsToDelete },
+  //                     },
+  //                   }),
+  //                   ...(vacations && {
+  //                     upsert: vacations.map((vacation) => ({
+  //                       where: { id: vacation.id || 'new' },
+  //                       create: {
+  //                         dates: vacation.dates.map((v) => {
+  //                           const dateWithoutTime = v.split('T')[0];
+  //                           return new Date(dateWithoutTime);
+  //                         }),
+  //                         month: new Date(vacation.month),
+  //                       },
+  //                       update: {
+  //                         dates: vacation.dates.map((v) => {
+  //                           const dateWithoutTime = v.split('T')[0];
+  //                           return new Date(dateWithoutTime);
+  //                         }),
+  //                         month: new Date(vacation.month),
+  //                       },
+  //                     })),
+  //                   }),
+  //                 },
+  //               }),
+  //               ...((start || end) && {
+  //                 Slot: {
+  //                   update: shouldUpdateImmediately
+  //                     ? {
+  //                         data: {
+  //                           slot: await this.AuthService.generateSlots(
+  //                             start,
+  //                             end,
+  //                           ),
+  //                           effectiveSlotDate: null,
+  //                           updatedSlot: [],
+  //                           end,
+  //                           start,
+  //                         },
+  //                       }
+  //                     : {
+  //                         data: {
+  //                           updatedSlot: await this.AuthService.generateSlots(
+  //                             start,
+  //                             end,
+  //                           ),
+  //                           effectiveSlotDate,
+  //                           end,
+  //                           start,
+  //                         },
+  //                       },
+  //                 },
+  //               }),
+  //               ...(user.role === Role.BARBER && { type }),
+  //             },
+  //           },
+  //         }),
+  //     },
+  //     select: {
+  //       id: true,
+  //       firstName: true,
+  //       lastName: true,
+  //       avatar: true,
+  //       phone: true,
+  //       ...(user.role === Role.BARBER && {
+  //         barber: { include: { vacations: true, Slot: true } },
+  //       }),
+  //       ...(user.role === Role.CASHIER && {
+  //         cashier: { include: { vacations: true, Slot: true } },
+  //       }),
+  //       ...(user.role === Role.USER && {
+  //         client: { select: this.client },
+  //       }),
+  //       ...(user.role === Role.ADMIN && {
+  //         admin: true,
+  //       }),
+  //     },
+  //   });
+  //   console.log(updateUser);
+
+  //   return new AppSuccess(updateUser, 'User updated successfully', 200);
+  // }
 
   public async CurrentUser(user: User) {
     const userWithRole = await this.prisma.user.findUnique({
