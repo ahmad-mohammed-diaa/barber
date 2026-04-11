@@ -717,7 +717,7 @@ export class OrderService {
           service: services,
           clientName: `${client.firstName} ${client.lastName}`,
           clientPhone: client.phone,
-          discount: order.subTotal - order.total,
+          totalDiscount: order.subTotal - order.total,
         },
         'Order fetched successfully',
         200,
