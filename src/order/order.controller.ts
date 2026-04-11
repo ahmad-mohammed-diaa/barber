@@ -58,9 +58,9 @@ export class OrderController {
   async getBarberOrders(
     @UserData('user') user: User,
     @Lang() lang: Language,
-    @Query('orderDate') orderDate?: Date,
+    @Query() { fromDate, toDate }: { fromDate?: Date; toDate?: Date },
   ) {
-    return this.orderService.GetBarberOrders(user.id, lang, orderDate);
+    return this.orderService.GetBarberOrders(user.id, lang, fromDate, toDate);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
