@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { PromoCodeService } from './promo-code.service';
 import { CreatePromoCodeDto } from './dto/create-promo-code.dto';
-import { RolesGuard } from 'guard/role.guard';
-import { AuthGuard } from 'guard/auth.guard';
+import { RolesGuard } from '../../guard/role.guard';
+import { AuthGuard } from '../../guard/auth.guard';
 
 @UseGuards(AuthGuard(), RolesGuard)
 @Controller('promo-code')

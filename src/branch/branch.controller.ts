@@ -20,9 +20,9 @@ import { multerConfig } from '../../src/config/multer.config';
 
 import { Lang } from '../../decorators/accept.language';
 import { CategoryType, Language } from '@prisma/client';
-import { AuthGuard } from 'guard/auth.guard';
-import { RolesGuard } from 'guard/role.guard';
-import { Roles } from 'decorators/roles.decorator';
+import { AuthGuard } from '../../guard/auth.guard';
+import { RolesGuard } from '../../guard/role.guard';
+import { Roles } from '../../decorators/roles.decorator';
 
 @Controller('branch')
 export class BranchController {

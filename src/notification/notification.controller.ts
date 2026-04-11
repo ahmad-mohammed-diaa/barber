@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import * as admin from 'firebase-admin';
-import { AuthGuard } from 'guard/auth.guard';
-import { UserData } from 'decorators/user.decorator';
+import { AuthGuard } from '../../guard/auth.guard';
+import { UserData } from '../../decorators/user.decorator';
 import { User } from '@prisma/client';
 import { NotificationScheduler } from './notificationScheduler';
 

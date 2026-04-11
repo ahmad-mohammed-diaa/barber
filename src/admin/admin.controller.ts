@@ -10,10 +10,10 @@ import {
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-import { AuthGuard } from 'guard/auth.guard';
-import { RolesGuard } from 'guard/role.guard';
-import { Roles } from 'decorators/roles.decorator';
-import { UserData } from 'decorators/user.decorator';
+import { AuthGuard } from '../../guard/auth.guard';
+import { RolesGuard } from '../../guard/role.guard';
+import { Roles } from '../../decorators/roles.decorator';
+import { UserData } from '../../decorators/user.decorator';
 import { User } from '@prisma/client';
 
 @Controller('admin')

@@ -10,11 +10,11 @@ import {
 } from '@nestjs/common';
 import { ComplainService } from './complain.service';
 import { CreateComplainDto } from './dto/create-complain.dto';
-import { UserData } from 'decorators/user.decorator';
+import { UserData } from '../../decorators/user.decorator';
 import { User } from '@prisma/client';
-import { AuthGuard } from 'guard/auth.guard';
-import { RolesGuard } from 'guard/role.guard';
-import { Roles } from 'decorators/roles.decorator';
+import { AuthGuard } from '../../guard/auth.guard';
+import { RolesGuard } from '../../guard/role.guard';
+import { Roles } from '../../decorators/roles.decorator';
 
 @Controller('complain')
 @UseGuards(AuthGuard(), RolesGuard)

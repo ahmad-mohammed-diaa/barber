@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { ClientPackagesService } from './client-packages.service';
 import { Language, User } from '@prisma/client';
-import { AuthGuard } from 'guard/auth.guard';
-import { Lang } from 'decorators/accept.language';
+import { AuthGuard } from '../../guard/auth.guard';
+import { Lang } from '../../decorators/accept.language';
 
 @UseGuards(AuthGuard())
 @Controller('client-packages')

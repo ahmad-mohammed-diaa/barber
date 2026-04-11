@@ -14,11 +14,11 @@ import {
   Patch,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { AuthGuard } from 'guard/auth.guard';
+import { AuthGuard } from '../../guard/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { RateBarberDto } from './dto/rate-barber.dto';
-import { UserData } from 'decorators/user.decorator';
+import { UserData } from '../../decorators/user.decorator';
 import { Role, User } from '@prisma/client';
 import { multerConfig } from 'src/config/multer.config';
 

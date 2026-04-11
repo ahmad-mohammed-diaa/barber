@@ -12,13 +12,13 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/auth-login-dto';
 import { RegisterDto } from './dto/auth-register-dto';
-import { AuthGuard } from 'guard/auth.guard';
-import { UserData } from 'decorators/user.decorator';
+import { AuthGuard } from '../../guard/auth.guard';
+import { UserData } from '../../decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../src/config/multer.config';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { Roles } from 'decorators/roles.decorator';
-import { RolesGuard } from 'guard/role.guard';
+import { Roles } from '../../decorators/roles.decorator';
+import { RolesGuard } from '../../guard/role.guard';
 
 @Controller('auth')
 export class AuthController {

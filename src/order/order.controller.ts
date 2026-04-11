@@ -13,9 +13,9 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UserData } from '../../decorators/user.decorator';
 import { Language, User } from '@prisma/client';
 import { AuthGuard } from '../../guard/auth.guard';
-import { RolesGuard } from 'guard/role.guard';
-import { Roles } from 'decorators/roles.decorator';
-import { Lang } from 'decorators/accept.language';
+import { RolesGuard } from '../../guard/role.guard';
+import { Roles } from '../../decorators/roles.decorator';
+import { Lang } from '../../decorators/accept.language';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
 
