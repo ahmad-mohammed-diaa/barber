@@ -187,8 +187,15 @@ export class UserService {
   ) {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
-    const { vacations, vacationsToDelete, type, start, end, ...rest } =
-      userData;
+    const {
+      vacations,
+      vacationsToDelete,
+      type,
+      start,
+      end,
+      isAvailable,
+      ...rest
+    } = userData;
     const roleKey =
       user.role === Role.USER ? 'client' : user.role.toLowerCase();
     const avatar = file?.path;
@@ -243,7 +250,7 @@ export class UserService {
       data: {
         ...rest,
         ...(avatar && { avatar }),
-        ...((vacations || vacationsToDelete || start || end || type) &&
+        ...((vacations || vacationsToDelete || start || end || type || isAvailable !== undefined) &&
           user.role !== Role.USER && {
             [roleKey]: {
               update: {
@@ -304,6 +311,7 @@ export class UserService {
                   },
                 }),
                 ...(user.role === Role.BARBER && { type }),
+                ...(user.role === Role.BARBER && isAvailable !== undefined && { isAvailable }),
               },
             },
           }),
