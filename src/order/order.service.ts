@@ -2102,6 +2102,7 @@ export class OrderService {
     let pointsDiscount = 0;
     let code: PromoCode;
     let total = currentOrder.total;
+    let UsedPoints = 0;
 
     if (points) {
       if (!settings) throw new NotFoundException('Settings not found');
@@ -2136,11 +2137,11 @@ export class OrderService {
     await this.findOneOrFail(id);
 
     if (points) {
-      const pointUsed = Math.floor(points / 1000) * 1000;
+      UsedPoints = Math.floor(points / 1000) * 1000;
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
-          client: { update: { points: { decrement: pointUsed } } },
+          client: { update: { points: { decrement: UsedPoints } } },
         },
       });
     }
@@ -2156,6 +2157,7 @@ export class OrderService {
           discount: code.discount,
           type: 'PERCENTAGE',
         }),
+        points: UsedPoints ?? 0,
         subTotal: currentOrder.subTotal,
         total,
       },
