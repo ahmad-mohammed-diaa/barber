@@ -28,6 +28,7 @@ import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
 import { comparePassword } from '../utils/lib';
+import { NotificationService } from 'src/notification/notification.service';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;
@@ -39,6 +40,7 @@ export class OrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly promoCodeService: PromoCodeService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async getAllOrdersDateRange(
@@ -1882,6 +1884,31 @@ export class OrderService {
               },
             },
           },
+          client: {
+            select: {
+              fcmToken: true,
+            },
+          },
+          barber: {
+            select: {
+              id: true,
+              avatar: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
+
+      await this.notificationService.sendNotification({
+        fcmTokens: [updatedOrder.client.fcmToken],
+        title: 'Order completed',
+        message: 'We hope you had a great experience with us',
+        data: {
+          orderId: updatedOrder.id,
+          barberId: updatedOrder.barber.id,
+          barberAvatar: updatedOrder.barber.avatar,
+          barberName: `${updatedOrder.barber.firstName} ${updatedOrder.barber.lastName}`,
         },
       });
 

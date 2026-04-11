@@ -1,17 +1,25 @@
-import { Controller, Post, Body, UseGuards, Put, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Put,
+  Get,
+  Headers,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import * as admin from 'firebase-admin';
 import { AuthGuard } from 'guard/auth.guard';
 import { UserData } from 'decorators/user.decorator';
 import { User } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { NotificationScheduler } from './notificationScheduler';
 
-@UseGuards(AuthGuard())
 @Controller('notification')
 export class NotificationController {
   constructor(
     private readonly NotificationService: NotificationService,
-    private readonly prisma: PrismaService,
+    private readonly notificationScheduler: NotificationScheduler,
   ) {
     admin.initializeApp({
       credential: admin.credential.cert({
@@ -25,38 +33,39 @@ export class NotificationController {
     });
   }
 
+  @Get('reminder')
+  async triggerReminder(@Headers('x-cron-secret') secret: string) {
+    if (secret !== process.env.CRON_SECRET) {
+      throw new UnauthorizedException('Invalid cron secret');
+    }
+    await this.notificationScheduler.notifyUpcomingAppointments();
+    return { success: true };
+  }
+
+  @UseGuards(AuthGuard())
   @Put('set-fcm')
   setFCM(@UserData('user') user: User, @Body() body) {
     return this.NotificationService.setFCMToken(user, body.fcmToken);
   }
 
+  @UseGuards(AuthGuard())
   @Post('send-notification')
   async sendNotification(
-    // @UserData('user') user: User,
     @Body()
     body: {
       fcmTokens: string[];
       title: string;
       message: string;
       imageUrl?: string;
+      data?: Record<string, string>;
     },
   ) {
     return this.NotificationService.sendNotification(body);
   }
 
+  @UseGuards(AuthGuard())
   @Get('get-history')
   getNotification(@UserData('user') user: User) {
     return this.NotificationService.getNotification(user);
   }
-
-  // @Get('set')
-  // se() {
-  //  const a = admin
-  //     .messaging()
-  //     .subscribeToTopic(
-  //       'efbeMVbMSo6LoQyiuMXh2T:APA91bHz6ziWxeOrU3J8sWi025T3pLOFRFKlbapAkrGvFGCGtWBNByQSRusEYWrPmL_Bxg4nERycquu0XWkFpXZjrZbz299xo7DkRSaceqE67UYBOAU9pIM',
-  //       'packages',
-  //   );
-  //   return a
-  // }
 }

@@ -30,6 +30,9 @@ export class NotificationScheduler {
       },
       include: {
         client: { select: { fcmToken: true } },
+        barber: {
+          select: { id: true, avatar: true, firstName: true, lastName: true },
+        },
       },
     });
     if (orders.length === 0) {
@@ -46,8 +49,13 @@ export class NotificationScheduler {
             fcmTokens: [fcmToken], // ✅ Must be a string, not an array
             title: '⏰ موعدك اقترب',
             message: 'تبقى 30 دقيقة على موعدك، ننتظرك بكل حماس لجلستك اليوم',
+
+            data: {
+              barberId: order.barber?.id ?? '',
+              barberAvatar: order.barber?.avatar ?? '',
+              barberName: `${order.barber?.firstName ?? ''} ${order.barber?.lastName ?? ''}`,
+            },
           });
-          console.log('notification send successfully');
 
           await this.prisma.order.update({
             where: { id: order.id },

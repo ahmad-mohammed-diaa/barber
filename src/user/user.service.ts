@@ -635,21 +635,21 @@ export class UserService {
     if (!barber) throw new NotFoundException('Barber not found');
 
     // 2. Verify the order belongs to this client, is with this barber, and is completed
-    // const completedOrder = await this.prisma.order.findFirst({
-    //   where: {
-    //     id: orderId,
-    //     userId: clientId,
-    //     barberId,
-    //     status: { in: ['COMPLETED', 'PAID'] },
-    //     deleted: false,
-    //   },
-    // });
+    const completedOrder = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        userId: clientId,
+        barberId,
+        status: { in: ['COMPLETED', 'PAID'] },
+        deleted: false,
+      },
+    });
 
-    // if (!completedOrder) {
-    //   throw new NotFoundException(
-    //     'No completed order found for this barber and client',
-    //   );
-    // }
+    if (!completedOrder) {
+      throw new NotFoundException(
+        'No completed order found for this barber and client',
+      );
+    }
 
     // 3. Check if this order was already rated
     const existingRating = await this.prisma.barberRating.findUnique({
