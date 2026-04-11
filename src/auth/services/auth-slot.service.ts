@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { generateSlots } from '@/utils/generateSlot';
+import { generateSlots } from '../../utils/generateSlot';
 
 @Injectable()
 export class AuthSlotService {
