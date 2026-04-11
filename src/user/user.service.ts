@@ -46,6 +46,7 @@ export class UserService {
     Slot: {
       select: {
         id: true,
+        isAvailable: true,
         start: true,
         end: true,
         slot: true,
