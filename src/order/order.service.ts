@@ -579,12 +579,11 @@ export class OrderService {
   async GetBarberOrders(
     barberId: string,
     language: Language,
-    orderDate?: Date,
+    fromDate?: Date,
+    toDate?: Date,
   ) {
-    const targetDate = orderDate ? new Date(orderDate) : new Date();
-
-    const startDate = startOfDay(targetDate);
-    const endDate = endOfDay(targetDate);
+    const startDate = startOfDay(fromDate ?? new Date());
+    const endDate = endOfDay(toDate ?? new Date());
 
     const fetchedOrders = await this.prisma.order.findMany({
       where: {
