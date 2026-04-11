@@ -2,7 +2,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { BookingStatus, OrderStatus, Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
@@ -12,6 +14,7 @@ import { addDays } from 'date-fns';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly AuthService: AuthService,
@@ -399,19 +402,26 @@ export class UserService {
   }
 
   public async updateBarberAvailability(id: string) {
-    const existing = await this.prisma.barber.findUnique({
-      where: { id },
-      select: { isAvailable: true },
-    });
-    const barber = await this.prisma.barber.update({
-      where: { id },
-      data: { isAvailable: !existing.isAvailable },
-    });
-    return new AppSuccess(
-      barber,
-      'Barber availability updated successfully',
-      200,
-    );
+    try {
+      const existing = await this.prisma.barber.findUnique({
+        where: { id },
+        select: { isAvailable: true },
+      });
+      const barber = await this.prisma.barber.update({
+        where: { id },
+        data: { isAvailable: !existing.isAvailable },
+      });
+      return new AppSuccess(
+        barber,
+        'Barber availability updated successfully',
+        200,
+      );
+    } catch (err) {
+      this.logger.error('Error updating barber availability:', err.message);
+      throw new InternalServerErrorException(
+        'Failed to update barber availability',
+      );
+    }
   }
 
   private async findOne(id: string) {

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -131,6 +136,16 @@ export class AdminService {
           'Admin orders with counts fetched successfully',
         );
     }
+  }
+
+  async CheckPassword(password: string) {
+    const settings = await this.prisma.settings.findFirst({
+      select: { password: true },
+    });
+    if (!password) return { data: false };
+    const valid = await comparePassword(password, settings.password);
+    if (!valid) return { data: false };
+    return { data: true };
   }
 
   private async AnalyticsSummary(fromDate?: Date, toDate?: Date) {
@@ -297,14 +312,5 @@ export class AdminService {
       slotsArray.push(slot);
     }
     return slotsArray;
-  }
-  async CheckPassword(password: string) {
-    const settings = await this.prisma.settings.findFirst({
-      select: { password: true },
-    });
-    if (!password) return { data: false };
-    const valid = await comparePassword(password, settings.password);
-    if (!valid) return { data: false };
-    return { data: true };
   }
 }

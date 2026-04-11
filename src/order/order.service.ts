@@ -675,10 +675,46 @@ export class OrderService {
     return new AppSuccess({ orders }, 'Orders fetched successfully');
   }
 
-  async getOrderById(id: string) {
-    const order = await this.findOneOrFail(id);
+  async getOrderById(id: string, lang: Language) {
+    try {
+      const order = await this.prisma.order.findUnique({
+        where: { id },
+        include: {
+          service: { include: { Translation: true } },
+          barber: { include: { barber: true } },
+          client: true,
+        },
+      });
+      if (!order) {
+        throw new NotFoundException('Order not found');
+      }
 
-    return new AppSuccess(order, 'Order fetched successfully');
+      const services = order.service.map((service) => {
+        const { Translation, ...rest } = service;
+        return {
+          ...rest,
+          nameEN: Translation.find((t) => t.language === 'EN')?.name,
+          nameAR: Translation.find((t) => t.language === 'AR')?.name,
+          name: Translation.find((t) => t.language === lang)?.name,
+        };
+      });
+
+      const { client, service: _, ...rest } = order;
+
+      return new AppSuccess(
+        {
+          ...rest,
+          service: services,
+          clientName: `${client.firstName} ${client.lastName}`,
+          clientPhone: client.phone,
+        },
+        'Order fetched successfully',
+        200,
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Failed to get order by id');
+    }
   }
 
   async GetData(

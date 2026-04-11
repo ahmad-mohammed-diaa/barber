@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+// import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { getOrderDateTime } from 'src/utils/lib';
 import { NotificationService } from 'src/notification/notification.service';
@@ -13,7 +13,7 @@ export class NotificationScheduler {
     private readonly notificationService: NotificationService,
   ) {}
 
-  @Cron(CronExpression.EVERY_30_MINUTES)
+  // @Cron(CronExpression.EVERY_30_MINUTES)
   async notifyUpcomingAppointments() {
     this.logger.log('Checking upcoming orders...');
 

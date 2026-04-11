@@ -197,8 +197,8 @@ export class OrderController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Get(':id')
-  async getOrderById(@Param('id') id: string) {
-    return this.orderService.getOrderById(id);
+  async getOrderById(@Param('id') id: string, @Lang() lang: Language) {
+    return this.orderService.getOrderById(id, lang);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
