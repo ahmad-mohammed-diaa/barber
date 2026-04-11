@@ -1,9 +1,13 @@
-export const Random = (length: number) => {
-  const chars =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
+import { randomInt } from 'crypto';
+
+const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+export const Random = (length = 6) => {
+  let code = '';
+
   for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += chars[randomInt(0, chars.length)];
   }
-  return result;
+
+  return code;
 };

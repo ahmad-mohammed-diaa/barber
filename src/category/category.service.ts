@@ -22,7 +22,7 @@ export class CategoryService {
     user: User,
     language: Language,
     type: CategoryType,
-  ): Promise<AppSuccess<{ categories: Category[]; package: any }>> {
+  ) {
     // Use Promise.all to run queries in parallel instead of sequentially
     const [fetchedCategories, packages] = await Promise.all([
       // Optimized category query - only fetch specific language translations
