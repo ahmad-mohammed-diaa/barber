@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-// import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { getOrderDateTime } from 'src/utils/lib';
 import { NotificationService } from 'src/notification/notification.service';
@@ -13,7 +13,7 @@ export class NotificationScheduler {
     private readonly notificationService: NotificationService,
   ) {}
 
-  // @Cron(CronExpression.EVERY_30_MINUTES)
+  // @Cron(CronExpression.EVERY_MINUTE)
   async notifyUpcomingAppointments() {
     this.logger.log('Checking upcoming orders...');
 
@@ -41,25 +41,16 @@ export class NotificationScheduler {
     }
     for (const order of orders) {
       const { date, fcmToken } = getOrderDateTime(order);
-      if (!date || !fcmToken) continue;
+      const d = new Date(date);
+      if (!d || !fcmToken) continue;
 
-      if (date > now && date <= threshold) {
+      if (d > now && date <= threshold) {
         try {
+          console.log('sending notification');
           await this.notificationService.sendNotification({
             fcmTokens: [fcmToken], // ✅ Must be a string, not an array
             title: '⏰ موعدك اقترب',
             message: 'تبقى 30 دقيقة على موعدك، ننتظرك بكل حماس لجلستك اليوم',
-
-            data: {
-              barberId: order.barber?.id ?? '',
-              barberAvatar: order.barber?.avatar ?? '',
-              barberName: `${order.barber?.firstName ?? ''} ${order.barber?.lastName ?? ''}`,
-            },
-          });
-
-          await this.prisma.order.update({
-            where: { id: order.id },
-            data: { reminderSent: true },
           });
 
           this.logger.log(`Notified order ${order.id}`);
