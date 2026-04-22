@@ -23,7 +23,7 @@ import { ProductModule } from './modules/product/product.module';
 import { StaticModule } from './modules/static/static.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SmsModule } from './sms/sms.module';
-import { NotificationScheduler } from './modules/notification/services/notificationScheduler';
+// import { NotificationScheduler } from './modules/notification/services/notificationScheduler';
 
 @Module({
   imports: [
@@ -54,7 +54,7 @@ import { NotificationScheduler } from './modules/notification/services/notificat
   controllers: [],
   providers: [
     TokenService,
-    NotificationScheduler,
+    // NotificationScheduler,
     { provide: APP_INTERCEPTOR, useClass: TransformResponseInterceptor },
   ],
 })
