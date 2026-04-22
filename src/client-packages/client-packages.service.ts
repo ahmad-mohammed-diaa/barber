@@ -88,14 +88,13 @@ export class ClientPackagesService {
         updatedAt: true,
         Translation: {
           where: { language },
-          ...translationDes().Translation,
+          ...Translation().Translation,
         },
         packageService: {
           include: {
             service: {
               include: {
                 Translation: {
-                  where: { language },
                   ...Translation().Translation,
                 },
               },
@@ -141,19 +140,13 @@ export class ClientPackagesService {
         id: true,
         createdAt: true,
         updatedAt: true,
-        Translation: {
-          where: { language },
-          ...translationDes().Translation,
-        },
+        ...Translation(true, language),
         packageService: {
           include: {
             service: {
               select: {
                 id: true,
-                Translation: {
-                  where: { language },
-                  ...Translation().Translation,
-                },
+                ...Translation(true, language),
                 serviceImg: true,
               },
             },

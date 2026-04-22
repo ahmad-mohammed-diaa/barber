@@ -1,27 +1,29 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { AuthModule } from './modules/auth/auth.module';
+import { UserModule } from './modules/user/user.module';
+import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
 import { PrismaModule } from './prisma/prisma.module';
-import { CategoryModule } from './category/category.module';
-import { ServiceModule } from './service/service.module';
-import { OrderModule } from './order/order.module';
-import { BranchModule } from './branch/branch.module';
-import { PromoCodeModule } from './promo-code/promo-code.module';
+import { CategoryModule } from './modules/category/category.module';
+import { ServiceModule } from './modules/service/service.module';
+import { OrderModule } from './modules/order/order.module';
+import { BranchModule } from './modules/branch/branch.module';
+import { PromoCodeModule } from './modules/promo-code/promo-code.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TokenService } from './token.service';
-import { ComplainModule } from './complain/complain.module';
+import { ComplainModule } from './modules/complain/complain.module';
 import { ConfigModule } from '@nestjs/config';
-import { PointsModule } from './points/points.module';
+import { PointsModule } from './modules/points/points.module';
 import { MockModule } from './mock/mock.module';
-import { PackageModule } from './package/package.module';
-import { ClientPackagesModule } from './client-packages/client-packages.module';
+import { PackageModule } from './modules/package/package.module';
+import { ClientPackagesModule } from './modules/client-packages/client-packages.module';
 import { PaymobModule } from './paymob/paymob.module';
-import { NotificationModule } from './notification/notification.module';
-import { ProductModule } from './product/product.module';
-import { StaticModule } from './static/static.module';
-import { AdminModule } from './admin/admin.module';
+import { NotificationModule } from './modules/notification/notification.module';
+import { ProductModule } from './modules/product/product.module';
+import { StaticModule } from './modules/static/static.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { SmsModule } from './sms/sms.module';
-import { NotificationScheduler } from './notification/notificationScheduler';
+import { NotificationScheduler } from './modules/notification/services/notificationScheduler';
 
 @Module({
   imports: [
@@ -50,6 +52,10 @@ import { NotificationScheduler } from './notification/notificationScheduler';
     SmsModule,
   ],
   controllers: [],
-  providers: [TokenService, NotificationScheduler],
+  providers: [
+    TokenService,
+    NotificationScheduler,
+    { provide: APP_INTERCEPTOR, useClass: TransformResponseInterceptor },
+  ],
 })
 export class AppModule {}
