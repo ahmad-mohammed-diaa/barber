@@ -3,16 +3,11 @@ import { PackageService } from './package.service';
 import { PackageController } from './package.controller';
 import { PackageQueryService } from './services/package-query.service';
 import { PackageMutationService } from './services/package-mutation.service';
-import { NotificationService } from 'src/notification/notification.service';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [],
+  imports: [NotificationModule],
   controllers: [PackageController],
-  providers: [
-    PackageService,
-    PackageQueryService,
-    PackageMutationService,
-    NotificationService,
-  ],
+  providers: [PackageService, PackageQueryService, PackageMutationService],
 })
 export class PackageModule {}

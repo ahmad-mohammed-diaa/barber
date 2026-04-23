@@ -10,7 +10,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { PromoCodeService } from '../../../promo-code/promo-code.service';
+import { PromoCodeService } from '../../promo-code/promo-code.service';
 import { OrderQueryService } from './order-query.service';
 import { OrderPricingService } from './order-pricing.service';
 import { CreateOrderDto } from '../dto/create-order.dto';

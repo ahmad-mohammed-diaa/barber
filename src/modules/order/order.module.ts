@@ -7,10 +7,11 @@ import { OrderPricingService } from './services/order-pricing.service';
 import { OrderBookingService } from './services/order-booking.service';
 import { OrderLifecycleService } from './services/order-lifecycle.service';
 import { OrderMutationService } from './services/order-mutation.service';
-import { PromoCodeService } from '../../promo-code/promo-code.service';
-import { NotificationService } from '../../notification/notification.service';
+import { PromoCodeModule } from '../promo-code/promo-code.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
+  imports: [PromoCodeModule, NotificationModule],
   controllers: [OrderController],
   providers: [
     OrderService,
@@ -20,8 +21,6 @@ import { NotificationService } from '../../notification/notification.service';
     OrderBookingService,
     OrderLifecycleService,
     OrderMutationService,
-    PromoCodeService,
-    NotificationService,
   ],
 })
 export class OrderModule {}

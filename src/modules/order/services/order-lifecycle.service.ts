@@ -5,8 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { NotificationService } from '../../../notification/notification.service';
-import { PromoCodeService } from '../../../promo-code/promo-code.service';
+import { NotificationService } from '../../notification/notification.service';
+import { PromoCodeService } from '../../promo-code/promo-code.service';
 import { OrderQueryService } from './order-query.service';
 import { PaidOrderBodyDto } from '../dto/paid-order-body.dto';
 import { BookingStatus, OrderStatus, PromoCode, Role } from '@prisma/client';
