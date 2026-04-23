@@ -22,7 +22,7 @@ export class ClientPackagesService {
     return this.clientPackagesQuery.findOne(id, language);
   }
 
-  update(id: number) {
+  update(id: string) {
     return this.clientPackagesMutation.update(id);
   }
 

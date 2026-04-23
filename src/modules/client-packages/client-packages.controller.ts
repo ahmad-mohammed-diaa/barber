@@ -53,7 +53,7 @@ export class ClientPackagesController {
   @Patch(':id')
   @UpdateClientPackageDoc()
   update(@Param('id') id: string) {
-    return this.clientPackagesService.update(+id);
+    return this.clientPackagesService.update(id);
   }
 
   @Delete(':id')

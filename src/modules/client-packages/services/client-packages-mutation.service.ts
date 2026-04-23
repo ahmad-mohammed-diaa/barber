@@ -79,8 +79,8 @@ export class ClientPackagesMutationService {
     );
   }
 
-  update(id: number) {
-    return `This action updates a #${id} clientPackage`;
+  update(_id: string) {
+    return `This action updates a #${_id} clientPackage`;
   }
 
   async remove(id: string) {
