@@ -6,7 +6,11 @@ import { PromoCodeMutationService } from './services/promo-code-mutation.service
 
 @Module({
   controllers: [PromoCodeController],
-  providers: [PromoCodeService, PromoCodeQueryService, PromoCodeMutationService],
+  providers: [
+    PromoCodeService,
+    PromoCodeQueryService,
+    PromoCodeMutationService,
+  ],
   exports: [PromoCodeService],
 })
 export class PromoCodeModule {}

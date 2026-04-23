@@ -4,7 +4,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { createTranslation } from 'src/class-type/translation';
-import { NotificationService } from 'src/notification/notification.service';
+import { NotificationService } from '../../notification/notification.service';
 
 @Injectable()
 export class PackageMutationService {

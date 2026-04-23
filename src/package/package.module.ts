@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PackageService } from './package.service';
 import { PackageController } from './package.controller';
-import { NotificationService } from 'src/notification/notification.service';
+import { NotificationService } from '..//notification/notification.service';
 
 @Module({
   imports: [],

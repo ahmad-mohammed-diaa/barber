@@ -24,9 +24,6 @@ export const multerConfig = (folder: string): multer.Options => {
         if (!formats.includes(extension)) {
           throw new UnsupportedMediaTypeException('Invalid image format!');
         }
-        if (!formats.includes(extension)) {
-          throw new UnsupportedMediaTypeException('Invalid image format!');
-        }
         return {
           folder: 'barber',
           format: extension,
