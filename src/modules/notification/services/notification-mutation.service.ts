@@ -109,20 +109,14 @@ export class NotificationMutationService {
 
       const [noti] = await Promise.all([
         admin.messaging().send(topicMessage),
-        ...users.map((u) =>
-          this.prisma.user.update({
-            where: { id: u.id },
-            data: {
-              notification: {
-                create: {
-                  content: body.message,
-                  title: body.title,
-                  ...(body.imageUrl && { image: body.imageUrl }),
-                },
-              },
-            },
-          }),
-        ),
+        this.prisma.notification.create({
+          data: {
+            title: body.title,
+            content: body.message,
+            ...(body.imageUrl && { image: body.imageUrl }),
+            user: { connect: users.map((u) => ({ id: u.id })) },
+          },
+        }),
       ]);
 
       return new AppSuccess(
