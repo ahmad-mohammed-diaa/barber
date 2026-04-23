@@ -34,8 +34,8 @@ export class OrderLifecycleService {
   async completeOrder(id: string) {
     await this.orderQuery.findOneOrFail(id);
 
-    return this.prisma.$transaction(async (prisma) => {
-      const updatedOrder = await this.prisma.order.update({
+    const updatedOrder = await this.prisma.$transaction(async (prisma) => {
+      const order = await prisma.order.update({
         where: { id },
         data: { status: OrderStatus.COMPLETED, booking: BookingStatus.PAST },
         include: {
@@ -47,42 +47,44 @@ export class OrderLifecycleService {
         },
       });
 
-      await this.notificationService.sendNotification({
-        fcmTokens: [updatedOrder.client.fcmToken],
-        title: 'Order completed',
-        message: 'We hope you had a great experience with us',
-        data: {
-          orderId: updatedOrder.id,
-          barberId: updatedOrder.barber.id,
-          barberAvatar: updatedOrder.barber.avatar,
-          barberName: `${updatedOrder.barber.firstName} ${updatedOrder.barber.lastName}`,
-        },
-      });
-
-      const packageServiceIds = updatedOrder.service.flatMap((s) =>
+      const packageServiceIds = order.service.flatMap((s) =>
         s.PackagesServices.map((ps) => ps.id),
       );
-      if (packageServiceIds.length > 0 && updatedOrder.userId) {
-        await this.prisma.packagesServices.deleteMany({
+      if (packageServiceIds.length > 0 && order.userId) {
+        await prisma.packagesServices.deleteMany({
           where: {
             id: { in: packageServiceIds },
-            ClientPackages: { clientId: updatedOrder?.userId },
+            ClientPackages: { clientId: order.userId },
             remainingCount: { lt: 1 },
           },
         });
       }
 
-      if (updatedOrder.usedPackage && updatedOrder.userId) {
+      if (order.usedPackage && order.userId) {
         await prisma.clientPackages.deleteMany({
           where: {
-            id: { in: updatedOrder?.usedPackage },
-            clientId: updatedOrder?.userId,
+            id: { in: order.usedPackage },
+            clientId: order.userId,
           },
         });
       }
 
-      return updatedOrder;
+      return order;
     });
+
+    await this.notificationService.sendNotification({
+      fcmTokens: [updatedOrder.client.fcmToken],
+      title: 'Order completed',
+      message: 'We hope you had a great experience with us',
+      data: {
+        orderId: updatedOrder.id,
+        barberId: updatedOrder.barber.id,
+        barberAvatar: updatedOrder.barber.avatar,
+        barberName: `${updatedOrder.barber.firstName} ${updatedOrder.barber.lastName}`,
+      },
+    });
+
+    return updatedOrder;
   }
 
   async cancelOrder(id: string, role: Role) {
