@@ -12,11 +12,14 @@ export class TokenOperationsService {
     try {
       return jwt.verify(token, this.jwtSecret);
     } catch (error) {
-      throw new UnauthorizedException('Invalid token', error.message);
+      throw new UnauthorizedException(
+        'Invalid token',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
-  public async loginToken(token: string) {
+  public async loginToken(token: string, userId?: string) {
     const decoded = jwt.decode(token);
     if (typeof decoded === 'object' && decoded !== null) {
       const expiredAt =
@@ -24,7 +27,7 @@ export class TokenOperationsService {
           ? new Date(decoded.exp * 1000)
           : new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000);
       return await this.prisma.token.create({
-        data: { token, expiredAt },
+        data: { token, expiredAt, userId },
       });
     }
     throw new Error('Invalid token');
@@ -32,7 +35,7 @@ export class TokenOperationsService {
 
   public async generateToken(userId: string) {
     const token = jwt.sign({ userId }, this.jwtSecret);
-    await this.loginToken(token);
+    await this.loginToken(token, userId);
     return token;
   }
 
@@ -43,29 +46,6 @@ export class TokenOperationsService {
   }
 
   public async invalidateAllUserTokens(userId: string) {
-    const allTokens = await this.prisma.token.findMany();
-
-    const userTokenIds: string[] = [];
-    for (const tokenRecord of allTokens) {
-      try {
-        const decoded = jwt.decode(tokenRecord.token);
-        if (
-          decoded &&
-          typeof decoded === 'object' &&
-          'userId' in decoded &&
-          decoded.userId === userId
-        ) {
-          userTokenIds.push(tokenRecord.id);
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    if (userTokenIds.length > 0) {
-      await this.prisma.token.deleteMany({
-        where: { id: { in: userTokenIds } },
-      });
-    }
+    await this.prisma.token.deleteMany({ where: { userId } });
   }
 }

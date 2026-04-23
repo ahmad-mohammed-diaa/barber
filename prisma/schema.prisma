@@ -170,6 +170,7 @@ model Token {
   id        String    @id @default(uuid())
   token     String    @unique
   expiredAt DateTime?
+  userId    String?
 }
 
 model Complain {
