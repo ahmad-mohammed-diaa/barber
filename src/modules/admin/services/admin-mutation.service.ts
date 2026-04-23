@@ -88,10 +88,10 @@ export class AdminMutationService {
     const settings = await this.prisma.settings.findFirst({
       select: { password: true },
     });
-    if (!password) return { data: false };
+    if (!password) return false;
     const valid = await comparePassword(password, settings.password);
-    if (!valid) return { data: false };
-    return { data: true };
+    if (!valid) return false;
+    return true;
   }
 
   private async generateSlots(start: number, end: number, duration: number) {
