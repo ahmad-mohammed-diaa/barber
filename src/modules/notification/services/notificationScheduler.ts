@@ -16,8 +16,6 @@ export class NotificationScheduler {
   @Cron(CronExpression.EVERY_30_MINUTES)
   async notifyUpcomingAppointments() {
     this.logger.log('Checking upcoming orders...');
-
-    console.log('notification send successfully');
     const now = new Date();
     const threshold = new Date(now.getTime() + 30 * 60000);
 
@@ -36,7 +34,7 @@ export class NotificationScheduler {
       },
     });
     if (orders.length === 0) {
-      console.log('no upcoming orders found');
+      this.logger.debug('No upcoming orders');
       return;
     }
     for (const order of orders) {

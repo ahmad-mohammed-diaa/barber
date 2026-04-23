@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AppSuccess } from '@/utils/AppSuccess';
@@ -6,11 +6,10 @@ import * as admin from 'firebase-admin';
 
 @Injectable()
 export class NotificationMutationService {
+  private readonly logger = new Logger(NotificationMutationService.name);
   constructor(readonly prisma: PrismaService) {}
 
   async setFCMToken(user: User, fcmToken: string) {
-    console.log(fcmToken);
-    console.log(user);
     const token = await this.prisma.user.update({
       where: {
         id: user.id,
@@ -19,8 +18,6 @@ export class NotificationMutationService {
         fcmToken,
       },
     });
-
-    console.log(token);
 
     await admin.messaging().subscribeToTopic(fcmToken, 'packages');
 
@@ -133,7 +130,7 @@ export class NotificationMutationService {
         'Notification sent to all users successfully',
       );
     } catch (error) {
-      console.log(error);
+      this.logger.error(error);
       return { error: 'Failed to send notification to all users' };
     }
   }
