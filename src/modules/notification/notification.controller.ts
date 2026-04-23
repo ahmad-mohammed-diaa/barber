@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
-import * as admin from 'firebase-admin';
 import { AuthGuard } from '../../../guard/auth.guard';
 import { UserData } from '../../../decorators/user.decorator';
 import { User } from '@prisma/client';
@@ -28,18 +27,7 @@ export class NotificationController {
   constructor(
     private readonly notificationService: NotificationService,
     private readonly notificationScheduler: NotificationScheduler,
-  ) {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        privateKey: (process.env.FIREBASE_PRIVATE_KEY as string).replace(
-          /\\n/g,
-          '\n',
-        ),
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      }),
-    });
-  }
+  ) {}
 
   @Get('reminder')
   @TriggerReminderDoc()
