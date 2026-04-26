@@ -789,7 +789,7 @@ export class OrderService {
       if (points && points <= 0) {
         throw new BadRequestException('You have exceeded the points limit');
       }
-      const dateWithoutTime = date.toString().split('T')[0];
+      const dateWithoutTime = date.toString().split(/[ T]/)[0];
       const allServices = [] as PrismaServiceType[];
 
       const another =
