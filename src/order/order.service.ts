@@ -458,7 +458,7 @@ export class OrderService {
         service: { include: { Translation: true } },
       },
       orderBy: {
-        date: 'asc',
+        date: 'desc',
       },
     });
 
