@@ -1092,7 +1092,9 @@ export class OrderService {
     }
 
     const allServices = [] as PrismaServiceType[];
-    const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
+    const dateWithoutTime = new Date(createOrderDto.date)
+      .toISOString()
+      .split(/[ T]/)[0];
 
     const another =
       phone && (await this.prisma.user.findUnique({ where: { phone } }));
