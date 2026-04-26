@@ -2655,10 +2655,7 @@ export class OrderService {
 
   private slotToDatetime(dateWithoutTime: string, slot: string): Date {
     const match = slot.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-    if (!match) {
-      const fallback = new Date(dateWithoutTime);
-      return isNaN(fallback.getTime()) ? new Date() : fallback;
-    }
+    if (!match) return new Date(`${dateWithoutTime}T00:00:00.000Z`);
 
     let hour = parseInt(match[1]);
     const minute = parseInt(match[2]);
@@ -2668,11 +2665,6 @@ export class OrderService {
     if (period === 'PM' && hour !== 12) hour += 12;
 
     const pad = (n: number) => String(n).padStart(2, '0');
-    const localDateTime = `${dateWithoutTime}T${pad(hour)}:${pad(minute)}:00`;
-
-    const result = fromZonedTime(localDateTime, EGYPT_TIMEZONE);
-
-    // If the result is still invalid (bad dateWithoutTime), use today as fallback
-    return isNaN(result.getTime()) ? new Date() : result;
+    return new Date(`${dateWithoutTime}T${pad(hour)}:${pad(minute)}:00.000Z`);
   }
 }
