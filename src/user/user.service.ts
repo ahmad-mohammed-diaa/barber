@@ -1,5 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -180,6 +181,39 @@ export class UserService {
     return new AppSuccess(user, 'User fetched successfully', 200);
   }
 
+  private normalizeVacationDates(dates: string | string[]): Date[] {
+    let parsedDates = dates;
+
+    if (typeof parsedDates === 'string') {
+      try {
+        parsedDates = JSON.parse(parsedDates);
+      } catch {
+        parsedDates = [parsedDates as string];
+      }
+    }
+
+    if (!Array.isArray(parsedDates)) {
+      parsedDates = [parsedDates];
+    }
+
+    return parsedDates.map((date: string) => this.normalizeVacationDate(date));
+  }
+
+  private normalizeVacationDate(date: unknown): Date {
+    if (typeof date !== 'string') {
+      throw new BadRequestException('Vacation dates must be strings');
+    }
+
+    const dateWithoutTime = date.split('T')[0];
+    const parsedDate = new Date(dateWithoutTime);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      throw new BadRequestException('Vacation dates must be valid dates');
+    }
+
+    return parsedDate;
+  }
+
   public async updateUser(
     id: string,
     userData: UserUpdateDto,
@@ -250,7 +284,12 @@ export class UserService {
       data: {
         ...rest,
         ...(avatar && { avatar }),
-        ...((vacations || vacationsToDelete || start || end || type || isAvailable !== undefined) &&
+        ...((vacations ||
+          vacationsToDelete ||
+          start ||
+          end ||
+          type ||
+          isAvailable !== undefined) &&
           user.role !== Role.USER && {
             [roleKey]: {
               update: {
@@ -262,23 +301,23 @@ export class UserService {
                       },
                     }),
                     ...(vacations && {
-                      upsert: vacations.map((vacation) => ({
-                        where: { id: vacation.id || 'new' },
-                        create: {
-                          dates: vacation.dates.map((v) => {
-                            const dateWithoutTime = v.split('T')[0];
-                            return new Date(dateWithoutTime);
-                          }),
-                          month: new Date(vacation.month),
-                        },
-                        update: {
-                          dates: vacation.dates.map((v) => {
-                            const dateWithoutTime = v.split('T')[0];
-                            return new Date(dateWithoutTime);
-                          }),
-                          month: new Date(vacation.month),
-                        },
-                      })),
+                      upsert: vacations.map((vacation) => {
+                        const dates = this.normalizeVacationDates(
+                          vacation.dates,
+                        );
+
+                        return {
+                          where: { id: vacation.id || 'new' },
+                          create: {
+                            dates,
+                            month: new Date(vacation.month),
+                          },
+                          update: {
+                            dates,
+                            month: new Date(vacation.month),
+                          },
+                        };
+                      }),
                     }),
                   },
                 }),
@@ -311,7 +350,8 @@ export class UserService {
                   },
                 }),
                 ...(user.role === Role.BARBER && { type }),
-                ...(user.role === Role.BARBER && isAvailable !== undefined && { isAvailable }),
+                ...(user.role === Role.BARBER &&
+                  isAvailable !== undefined && { isAvailable }),
               },
             },
           }),
