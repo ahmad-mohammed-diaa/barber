@@ -104,12 +104,13 @@ export class Vacation {
   @Transform(({ value }) => {
     if (typeof value === 'string') {
       try {
-        return JSON.parse(value);
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [parsed];
       } catch {
-        return value;
+        return [value];
       }
     }
-    return value;
+    return Array.isArray(value) ? value : [value];
   })
   dates: string[];
 
