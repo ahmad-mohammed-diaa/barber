@@ -23,11 +23,11 @@ import {
   User,
 } from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
-import { comparePassword } from '../utils/lib';
+import { comparePassword, EGYPT_TIMEZONE } from '../utils/lib';
 import { NotificationService } from 'src/notification/notification.service';
 
 interface PrismaServiceType extends Service {
@@ -60,8 +60,14 @@ export class OrderService {
       : ({ id: cashier.branchId } as Prisma.BranchWhereInput);
 
     // Use startOfDay and endOfDay to ensure we capture the full day range
-    const startDate = startOfDay(fromDate);
-    const endDate = endOfDay(toDate);
+    const fromStart = fromZonedTime(
+      startOfDay(toZonedTime(fromDate, EGYPT_TIMEZONE)),
+      EGYPT_TIMEZONE,
+    );
+    const toEnd = fromZonedTime(
+      endOfDay(toZonedTime(toDate, EGYPT_TIMEZONE)),
+      EGYPT_TIMEZONE,
+    );
 
     const branches = await this.prisma.branch.findMany({
       where: branchFilter,
@@ -71,8 +77,8 @@ export class OrderService {
             Order: {
               where: {
                 date: {
-                  gte: startDate,
-                  lte: endDate,
+                  gte: fromStart,
+                  lte: toEnd,
                 },
               },
             },
@@ -82,8 +88,8 @@ export class OrderService {
         Order: {
           where: {
             date: {
-              gte: startDate,
-              lte: endDate,
+              gte: fromStart,
+              lte: toEnd,
             },
           },
           include: {
@@ -109,7 +115,7 @@ export class OrderService {
             },
           },
           orderBy: {
-            createdAt: 'desc',
+            date: 'asc',
           },
         },
       },
@@ -209,9 +215,12 @@ export class OrderService {
       where: {
         status: 'PAID',
         date: {
-          gte: startOfDay(date),
-          lte: endOfDay(date),
+          gte: startOfDay(toZonedTime(date, EGYPT_TIMEZONE)),
+          lte: endOfDay(toZonedTime(date, EGYPT_TIMEZONE)),
         },
+      },
+      orderBy: {
+        date: 'asc',
       },
       select: {
         id: true,
@@ -292,6 +301,14 @@ export class OrderService {
     });
     if (!cashier) throw new NotFoundException('Cashier not found');
 
+    const fromStart = fromZonedTime(
+      startOfDay(toZonedTime(from, EGYPT_TIMEZONE)),
+      EGYPT_TIMEZONE,
+    );
+    const toEnd = fromZonedTime(
+      endOfDay(toZonedTime(to, EGYPT_TIMEZONE)),
+      EGYPT_TIMEZONE,
+    );
     const fetchedOrders = await this.prisma.order.findMany({
       where: {
         branchId: cashier.branchId,
@@ -306,8 +323,12 @@ export class OrderService {
             ],
           },
         },
-        date: { gte: startOfDay(from), lte: endOfDay(to) },
+        date: {
+          gte: fromStart,
+          lte: toEnd,
+        },
       },
+      orderBy: { date: 'asc' },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
         client: { include: { client: true } },
@@ -318,14 +339,16 @@ export class OrderService {
         },
       },
     });
-    console.log(fetchedOrders);
 
     const settings = await this.prisma.settings.findFirst();
     if (!settings) throw new NotFoundException('Settings not found');
 
     const TotalSales = await this.prisma.order.aggregate({
       where: {
-        date: { gte: startOfDay(from), lte: endOfDay(to) },
+        date: {
+          gte: startOfDay(toZonedTime(from, EGYPT_TIMEZONE)),
+          lte: endOfDay(toZonedTime(to, EGYPT_TIMEZONE)),
+        },
         status: OrderStatus.PAID,
       },
       _sum: { total: true },
@@ -434,6 +457,9 @@ export class OrderService {
         branch: { include: Translation(false, lang) },
         service: { include: { Translation: true } },
       },
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
 
     const orders = await Promise.all(
@@ -515,11 +541,19 @@ export class OrderService {
   }
 
   async getPayedOrders(lang: Language, from: string, to: string) {
+    const fromStart = fromZonedTime(
+      startOfDay(toZonedTime(from, EGYPT_TIMEZONE)),
+      EGYPT_TIMEZONE,
+    );
+    const toEnd = fromZonedTime(
+      endOfDay(toZonedTime(to, EGYPT_TIMEZONE)),
+      EGYPT_TIMEZONE,
+    );
     const fetchedOrders = await this.prisma.order.findMany({
       where: {
         date: {
-          gte: new Date(from),
-          lte: new Date(to),
+          gte: fromStart,
+          lte: toEnd,
         },
         status: OrderStatus.COMPLETED,
       },
@@ -592,19 +626,26 @@ export class OrderService {
     fromDate?: Date,
     toDate?: Date,
   ) {
-    const startDate = startOfDay(fromDate ?? new Date());
-    const endDate = endOfDay(toDate ?? new Date());
+    const fromStart = fromZonedTime(
+      startOfDay(toZonedTime(fromDate ?? new Date(), EGYPT_TIMEZONE)),
+      EGYPT_TIMEZONE,
+    );
+    const toEnd = fromZonedTime(
+      endOfDay(toZonedTime(toDate ?? new Date(), EGYPT_TIMEZONE)),
+      EGYPT_TIMEZONE,
+    );
 
     const fetchedOrders = await this.prisma.order.findMany({
       where: {
         barberId: barberId,
-        date: { gte: startDate, lte: endDate },
+        date: { gte: fromStart, lte: toEnd },
         OR: [
           { status: OrderStatus.PENDING },
           { status: OrderStatus.IN_PROGRESS },
           { booking: BookingStatus.UPCOMING },
         ],
       },
+      orderBy: { date: 'asc' },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
         branch: { include: Translation(false) },
@@ -773,7 +814,7 @@ export class OrderService {
           await this.prisma.order.findFirst({
             where: {
               ...(barberId && { barberId: barberId }),
-              date: new Date(dateWithoutTime),
+              date: this.slotToDatetime(dateWithoutTime, slot),
               slot: slot,
               OR: [
                 { status: 'PENDING' },
@@ -973,7 +1014,7 @@ export class OrderService {
 
       return new AppSuccess(
         {
-          date: format(new Date(dateWithoutTime), 'yyyy-MM-dd'),
+          date: dateWithoutTime,
           slot,
           ...(barberId && { barberId }),
           branchId,
@@ -1074,7 +1115,7 @@ export class OrderService {
         await this.prisma.order.findFirst({
           where: {
             ...(barberId && { barberId: barberId }),
-            date: new Date(dateWithoutTime),
+            date: this.slotToDatetime(dateWithoutTime, slot),
             slot: slot,
             OR: [
               { status: 'PENDING' },
@@ -1281,7 +1322,7 @@ export class OrderService {
           usedPackage: selectedPackage
             ? selectedPackage.flatMap((e) => e.id)
             : [],
-          date: new Date(dateWithoutTime),
+          date: this.slotToDatetime(dateWithoutTime, slot),
           service: {
             connect: allServices.map((service) => ({ id: service.id })),
           },
@@ -1380,7 +1421,7 @@ export class OrderService {
             ? selectedPackage.flatMap((e) => e.id)
             : [],
           freeService: allServices.filter((s) => s.isFree).flatMap((s) => s.id),
-          date: new Date(dateWithoutTime),
+          date: this.slotToDatetime(dateWithoutTime, slot),
           service: {
             connect: allServices.map((service) => ({ id: service.id })),
           },
@@ -2610,5 +2651,28 @@ export class OrderService {
     }
 
     return pointsDiscount;
+  }
+
+  private slotToDatetime(dateWithoutTime: string, slot: string): Date {
+    const match = slot.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) {
+      const fallback = new Date(dateWithoutTime);
+      return isNaN(fallback.getTime()) ? new Date() : fallback;
+    }
+
+    let hour = parseInt(match[1]);
+    const minute = parseInt(match[2]);
+    const period = match[3].toUpperCase();
+
+    if (period === 'AM' && hour === 12) hour = 0;
+    if (period === 'PM' && hour !== 12) hour += 12;
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const localDateTime = `${dateWithoutTime}T${pad(hour)}:${pad(minute)}:00`;
+
+    const result = fromZonedTime(localDateTime, EGYPT_TIMEZONE);
+
+    // If the result is still invalid (bad dateWithoutTime), use today as fallback
+    return isNaN(result.getTime()) ? new Date() : result;
   }
 }

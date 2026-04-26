@@ -22,7 +22,7 @@ export class CreateOrderDto {
   phone: string;
 
   @IsString()
-  date: Date;
+  date: string;
 
   @IsString()
   slot: string;
