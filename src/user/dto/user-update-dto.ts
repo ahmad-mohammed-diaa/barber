@@ -6,16 +6,16 @@ import { RegisterDto } from 'src/auth/dto/auth-register-dto';
 export class UserUpdateDto extends PartialType(RegisterDto) {
   @IsOptional()
   @IsString({ each: true })
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      try {
-        return JSON.parse(value);
-      } catch {
-        return [value];
-      }
-    }
-    return Array.isArray(value) ? value : [value];
-  })
+  // @Transform(({ value }) => {
+  //   if (typeof value === 'string') {
+  //     try {
+  //       return JSON.parse(value);
+  //     } catch {
+  //       return [value];
+  //     }
+  //   }
+  //   return Array.isArray(value) ? value : [value];
+  // })
   vacationsToDelete?: string[];
 
   @IsOptional()
