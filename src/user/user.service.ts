@@ -270,14 +270,14 @@ export class UserService {
                       upsert: vacations.map((vacation) => ({
                         where: { id: vacation.id || 'new' },
                         create: {
-                          dates: (Array.isArray(vacation.dates) ? vacation.dates : [vacation.dates]).map((v) => {
+                          dates: vacation.dates.map((v) => {
                             const dateWithoutTime = v.split('T')[0];
                             return new Date(dateWithoutTime);
                           }),
                           month: new Date(vacation.month),
                         },
                         update: {
-                          dates: (Array.isArray(vacation.dates) ? vacation.dates : [vacation.dates]).map((v) => {
+                          dates: vacation.dates.map((v) => {
                             const dateWithoutTime = v.split('T')[0];
                             return new Date(dateWithoutTime);
                           }),

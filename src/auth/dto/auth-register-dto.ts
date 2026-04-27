@@ -58,16 +58,16 @@ export class RegisterDto {
   @IsArray()
   @IsOptional()
   @ValidateIf((o) => ['CASHIER', 'BARBER'].includes(o?.role?.toUpperCase()))
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      try {
-        return JSON.parse(value);
-      } catch {
-        return value;
-      }
-    }
-    return value;
-  })
+  // @Transform(({ value }) => {
+  //   if (typeof value === 'string') {
+  //     try {
+  //       return JSON.parse(value);
+  //     } catch {
+  //       return value;
+  //     }
+  //   }
+  //   return value;
+  // })
   vacations: Vacation[];
 
   @ValidateIf((o) => ['CASHIER', 'BARBER'].includes(o?.role?.toUpperCase()))
@@ -101,17 +101,17 @@ export class Vacation {
 
   @IsArray()
   @IsNotEmpty()
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      try {
-        const parsed = JSON.parse(value);
-        return Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        return [value];
-      }
-    }
-    return Array.isArray(value) ? value : [value];
-  })
+  // @Transform(({ value }) => {
+  //   if (typeof value === 'string') {
+  //     try {
+  //       const parsed = JSON.parse(value);
+  //       return Array.isArray(parsed) ? parsed : [parsed];
+  //     } catch {
+  //       return [value];
+  //     }
+  //   }
+  //   return Array.isArray(value) ? value : [value];
+  // })
   dates: string[];
 
   @IsString()
