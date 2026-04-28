@@ -13,13 +13,13 @@ export class NotificationScheduler {
     private readonly notificationService: NotificationService,
   ) {}
 
-  // @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_MINUTE)
   async notifyUpcomingAppointments() {
     this.logger.log('Checking upcoming orders...');
 
-    console.log('notification send successfully');
     const now = new Date();
-    const threshold = new Date(now.getTime() + 30 * 60000);
+    const windowStart = new Date(now.getTime() + 29 * 60_000);
+    const windowEnd = new Date(now.getTime() + 30 * 60_000);
 
     const orders = await this.prisma.order.findMany({
       where: {
@@ -35,28 +35,35 @@ export class NotificationScheduler {
         },
       },
     });
+
     if (orders.length === 0) {
-      console.log('no upcoming orders found');
       return;
     }
+
     for (const order of orders) {
-      const { date, fcmToken } = getOrderDateTime(order);
-      const d = new Date(date);
-      if (!d || !fcmToken) continue;
+      const result = getOrderDateTime(order);
+      if (!result) continue;
 
-      if (d > now && date <= threshold) {
-        try {
-          console.log('sending notification');
-          await this.notificationService.sendNotification({
-            fcmTokens: [fcmToken], // ✅ Must be a string, not an array
-            title: '⏰ موعدك اقترب',
-            message: 'تبقى 30 دقيقة على موعدك، ننتظرك بكل حماس لجلستك اليوم',
-          });
+      const { date, fcmToken } = result;
+      if (!fcmToken) continue;
 
-          this.logger.log(`Notified order ${order.id}`);
-        } catch (err) {
-          this.logger.error(`Notification failed for ${order.id}, ${err}`);
-        }
+      if (date < windowStart || date > windowEnd) continue;
+
+      try {
+        await this.notificationService.sendNotification({
+          fcmTokens: [fcmToken],
+          title: '⏰ موعدك اقترب',
+          message: 'تبقى 30 دقيقة على موعدك، ننتظرك بكل حماس لجلستك اليوم',
+        });
+
+        await this.prisma.order.update({
+          where: { id: order.id },
+          data: { reminderSent: true },
+        });
+
+        this.logger.log(`Notified order ${order.id}`);
+      } catch (err) {
+        this.logger.error(`Notification failed for ${order.id}, ${err}`);
       }
     }
   }
