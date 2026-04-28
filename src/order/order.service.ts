@@ -1548,7 +1548,7 @@ export class OrderService {
 
       if (!slotsResult.data.slots.includes(order.slot)) {
         throw new ConflictException(
-          `The slot ${order.slot} is not available for the new barber. The new barber needs ${totalDuration} minutes of consecutive free slots starting at ${order.slot}. Available slots: ${slotsResult.data.slots.join(', ')}`,
+          `The slot ${order.slot} is not available for the new barber. The new barber needs ${totalDuration} minutes of consecutive free slots starting at ${order.slot}.`,
         );
       }
     }
@@ -2657,16 +2657,25 @@ export class OrderService {
 
   private slotToDatetime(dateWithoutTime: string, slot: string): Date {
     const match = slot.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-    if (!match) return new Date(`${dateWithoutTime}T00:00:00.000Z`);
+    const pad = (n: number) => String(n).padStart(2, '0');
 
-    let hour = parseInt(match[1]);
-    const minute = parseInt(match[2]);
+    if (!match) {
+      return fromZonedTime(
+        new Date(`${dateWithoutTime}T00:00:00`),
+        EGYPT_TIMEZONE,
+      );
+    }
+
+    let hour = parseInt(match[1], 10);
+    const minute = parseInt(match[2], 10);
     const period = match[3].toUpperCase();
 
     if (period === 'AM' && hour === 12) hour = 0;
     if (period === 'PM' && hour !== 12) hour += 12;
 
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return new Date(`${dateWithoutTime}T${pad(hour)}:${pad(minute)}:00.000Z`);
+    return fromZonedTime(
+      new Date(`${dateWithoutTime}T${pad(hour)}:${pad(minute)}:00`),
+      EGYPT_TIMEZONE,
+    );
   }
 }
