@@ -627,11 +627,11 @@ export class OrderService {
     toDate?: Date,
   ) {
     const fromStart = fromZonedTime(
-      startOfDay(toZonedTime(fromDate ?? new Date(), EGYPT_TIMEZONE)),
+      startOfDay(toZonedTime(fromDate, EGYPT_TIMEZONE)),
       EGYPT_TIMEZONE,
     );
     const toEnd = fromZonedTime(
-      endOfDay(toZonedTime(toDate ?? new Date(), EGYPT_TIMEZONE)),
+      endOfDay(toZonedTime(toDate, EGYPT_TIMEZONE)),
       EGYPT_TIMEZONE,
     );
 
