@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 
 export const hashedPassword = async (password: string) =>
   await bcrypt.hash(password, 10);
@@ -43,3 +44,29 @@ export const getOrderDateTime = (
 
   return { date, fcmToken: order.client.fcmToken };
 };
+
+export function getEgyptDateRange(
+  fromDate?: string | Date,
+  toDate?: string | Date,
+) {
+  const todayInEgypt = formatInTimeZone(
+    new Date(),
+    EGYPT_TIMEZONE,
+    'yyyy-MM-dd',
+  );
+
+  const fromDay =
+    fromDate instanceof Date
+      ? formatInTimeZone(fromDate, EGYPT_TIMEZONE, 'yyyy-MM-dd')
+      : (fromDate ?? todayInEgypt);
+
+  const toDay =
+    toDate instanceof Date
+      ? formatInTimeZone(toDate, EGYPT_TIMEZONE, 'yyyy-MM-dd')
+      : (toDate ?? fromDay);
+
+  const fromStart = fromZonedTime(`${fromDay}T00:00:00.000`, EGYPT_TIMEZONE);
+  const toEnd = fromZonedTime(`${toDay}T23:59:59.999`, EGYPT_TIMEZONE);
+
+  return { fromStart, toEnd };
+}
