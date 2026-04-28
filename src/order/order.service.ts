@@ -27,7 +27,11 @@ import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
-import { comparePassword, EGYPT_TIMEZONE } from '../utils/lib';
+import {
+  comparePassword,
+  EGYPT_TIMEZONE,
+  getEgyptDateRange,
+} from '../utils/lib';
 import { NotificationService } from 'src/notification/notification.service';
 
 interface PrismaServiceType extends Service {
@@ -623,17 +627,10 @@ export class OrderService {
   async GetBarberOrders(
     barberId: string,
     language: Language,
-    fromDate?: Date,
-    toDate?: Date,
+    fromDate?: string | Date,
+    toDate?: string | Date,
   ) {
-    const fromStart = fromZonedTime(
-      startOfDay(toZonedTime(new Date(fromDate ?? new Date()), EGYPT_TIMEZONE)),
-      EGYPT_TIMEZONE,
-    );
-    const toEnd = fromZonedTime(
-      endOfDay(toZonedTime(new Date(toDate ?? new Date()), EGYPT_TIMEZONE)),
-      EGYPT_TIMEZONE,
-    );
+    const { fromStart, toEnd } = getEgyptDateRange(fromDate, toDate);
 
     const fetchedOrders = await this.prisma.order.findMany({
       where: {

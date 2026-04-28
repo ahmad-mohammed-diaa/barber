@@ -49,21 +49,46 @@ export function getEgyptDateRange(
   fromDate?: string | Date,
   toDate?: string | Date,
 ) {
+  const normalizeDateDay = (
+    value: string | Date | undefined,
+    fallback: string,
+  ) => {
+    if (!value) return fallback;
+
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime())
+        ? fallback
+        : formatInTimeZone(value, EGYPT_TIMEZONE, 'yyyy-MM-dd');
+    }
+
+    const day = value.trim().slice(0, 10);
+    const match = day.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (!match) return fallback;
+
+    const [, year, month, date] = match;
+    const parsedDay = new Date(`${day}T00:00:00.000Z`);
+
+    if (
+      Number.isNaN(parsedDay.getTime()) ||
+      parsedDay.getUTCFullYear() !== Number(year) ||
+      parsedDay.getUTCMonth() + 1 !== Number(month) ||
+      parsedDay.getUTCDate() !== Number(date)
+    ) {
+      return fallback;
+    }
+
+    return day;
+  };
+
   const todayInEgypt = formatInTimeZone(
     new Date(),
     EGYPT_TIMEZONE,
     'yyyy-MM-dd',
   );
 
-  const fromDay =
-    fromDate instanceof Date
-      ? formatInTimeZone(fromDate, EGYPT_TIMEZONE, 'yyyy-MM-dd')
-      : (fromDate ?? todayInEgypt);
-
-  const toDay =
-    toDate instanceof Date
-      ? formatInTimeZone(toDate, EGYPT_TIMEZONE, 'yyyy-MM-dd')
-      : (toDate ?? fromDay);
+  const fromDay = normalizeDateDay(fromDate, todayInEgypt);
+  const toDay = normalizeDateDay(toDate, fromDay);
 
   const fromStart = fromZonedTime(`${fromDay}T00:00:00.000`, EGYPT_TIMEZONE);
   const toEnd = fromZonedTime(`${toDay}T23:59:59.999`, EGYPT_TIMEZONE);
