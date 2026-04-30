@@ -5,8 +5,8 @@ import * as crypto from 'crypto';
 import { Language, User } from '@prisma/client';
 import { Response } from 'express';
 import { join } from 'path';
-import { ClientPackagesQueryService } from '@/modules/client-packages/services/client-packages-query.service';
-import { PointsMutationService } from '@/modules/points/services/points-mutation.service';
+import { ClientPackagesQueryService } from '../modules/client-packages/services/client-packages-query.service';
+import { PointsMutationService } from '../modules/points/services/points-mutation.service';
 
 @Injectable()
 export class PaymobService {
