@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAboutDto, CreateQuestionDto } from '../dto/create-static.dto';
 import { UpdateStaticDto } from '../dto/update-static.dto';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 
 @Injectable()
 export class StaticMutationService {

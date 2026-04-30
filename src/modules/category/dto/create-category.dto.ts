@@ -2,7 +2,7 @@ import { CategoryType } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { translationDto } from '../../../class-type/translation';
+import { translationDto } from '../../../common/class-type/translation';
 
 export class CreateCategoryDto {
   @ApiPropertyOptional({ example: true })

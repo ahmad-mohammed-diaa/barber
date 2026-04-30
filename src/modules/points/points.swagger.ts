@@ -1,4 +1,4 @@
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 import { UpdatePointDto } from './dto/update-point.dto';
 
 export const CreatePointDoc = () =>

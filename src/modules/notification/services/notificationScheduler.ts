@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaService } from '@/prisma/prisma.service';
-import { getOrderDateTime } from '@/utils/lib';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { getOrderDateTime } from '../../../common/utils/lib';
 import { NotificationMutationService } from './notification-mutation.service';
 
 @Injectable()

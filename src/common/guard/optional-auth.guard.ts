@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { JwtPayload } from 'jsonwebtoken';
-import { AuthService } from 'src/auth/auth.service';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { AuthService } from '../../modules/auth/auth.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class OptionalAuthGuard implements CanActivate {

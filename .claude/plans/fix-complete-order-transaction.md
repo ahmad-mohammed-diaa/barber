@@ -35,4 +35,4 @@ File: `src/modules/order/services/order-lifecycle.service.ts`, line ~37.
 - Simulate a notification failure mid-complete — order status should remain COMPLETED in DB (it was committed), not rolled back
 
 ## Status
-[ ] In Progress [ ] Implemented [ ] Verified
+[x] In Progress [x] Implemented [x] Verified

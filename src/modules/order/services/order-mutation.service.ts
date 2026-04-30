@@ -11,7 +11,7 @@ import { OrderLifecycleService } from './order-lifecycle.service';
 import { UpdateOrderDto } from '../dto/update-order.dto';
 import { UpdateOrderServicesDto } from '../dto/update-order-services.dto';
 import { Role } from '@prisma/client';
-import { comparePassword } from '../../../utils/lib';
+import { comparePassword } from '../../../common/utils/lib';
 
 @Injectable()
 export class OrderMutationService {

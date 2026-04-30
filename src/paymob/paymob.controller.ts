@@ -13,13 +13,13 @@ import { PaymobService } from './paymob.service';
 import { Response } from 'express';
 import { config } from 'dotenv';
 import { Language, User } from '@prisma/client';
-import { AuthGuard } from '../../guard/auth.guard';
-import { UserData } from '../../decorators/user.decorator';
+import { AuthGuard } from '../common/guard/auth.guard';
+import { UserData } from '../common/decorators/user.decorator';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePaymobDto } from './dto/create-paymob.dto';
 import { join } from 'path';
-import { Lang } from '../../decorators/accept.language';
-import { Translation } from 'src/class-type/translation';
+import { Lang } from '../common/decorators/accept.language';
+import { Translation } from '../common/class-type/translation';
 
 config();
 

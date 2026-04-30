@@ -4,7 +4,7 @@ import { hash } from 'bcrypt';
 import {
   createTranslation,
   Translation,
-} from '../../src/class-type/translation';
+} from '../common/class-type/translation';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()

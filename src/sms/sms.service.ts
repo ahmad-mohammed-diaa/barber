@@ -7,11 +7,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import axios from 'axios';
-import { RegisterDto } from 'src/auth/dto/auth-register-dto';
-import { AuthService } from 'src/auth/auth.service';
+import { RegisterDto } from '../modules/auth/dto/auth-register-dto';
+import { AuthService } from '../modules/auth/auth.service';
 import { hash } from 'bcrypt';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { AppSuccess } from '../common/utils/AppSuccess';
 import { User } from '@prisma/client';
 
 @Injectable()

@@ -1,4 +1,4 @@
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 import { CreatePromoCodeDto } from './dto/create-promo-code.dto';
 
 export const CreatePromoCodeDoc = () =>

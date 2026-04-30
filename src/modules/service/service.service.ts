@@ -8,8 +8,8 @@ import {
   createTranslation,
   Translation as serviceTranslation,
   updateTranslation,
-} from '../../class-type/translation';
-import { getTranslationNames } from '@/common/lib/lib';
+} from '../../common/class-type/translation';
+import { getTranslationNames } from '../../common/lib/lib';
 
 @Injectable()
 export class ServiceService {

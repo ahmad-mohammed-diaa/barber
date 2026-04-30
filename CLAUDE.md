@@ -104,11 +104,18 @@ Every module under `src/modules/` follows this pattern (reference: `auth` module
 - **`extraModels` is required** whenever `body` is passed to `ApiDoc()`
 - **`app.module.ts` must be updated** when adding any new module
 - **`notification` scheduler** — `NotificationScheduler` is registered as a provider in `AppModule` directly (not only via `NotificationModule`). Its import path is `src/modules/notification/services/notificationScheduler`.
-- **`package` module** depends on `NotificationService` from the legacy `src/notification/` — it imports the original directly. When legacy notification is eventually deleted, update `PackageModule` providers.
+- **`package` module** now imports `NotificationModule` (not bare `NotificationService`) — fixed in `fix-legacy-module-imports` commit.
 - **`client-packages`, `product`, `points`** import translation helpers from `src/class-type/translation` — keep this path as-is.
 - **`admin` query service** imports `TranslateName` from `lib/lib.ts` at root level — path from `src/modules/admin/services/` is `../../../../lib/lib`.
 - **Unused stub parameters** — legacy modules have unimplemented `update()`/`remove()` stubs with unused params. Prefix with `_` (e.g. `_updatePointDto`) — `.eslintrc.js` has `argsIgnorePattern: '^_'` configured.
 - **`claude` CLI cannot be invoked as a bash subprocess on Windows** — git-bash is not on PATH in that context. Use the Agent tool directly for parallel workstreams instead.
+- **`prisma generate` on Windows fails with EPERM** when the dev server is running (DLL file is locked). Stop the dev server before running `npx prisma generate` or `npx prisma migrate dev`. The migration applies to the DB successfully regardless; only the client type regeneration is blocked.
+- **`notification` model uses many-to-many with User** — no direct `userId` column on `notification`. Use `notification.create({ data: { ..., user: { connect: [...] } } })` for bulk inserts; `createMany` won't work on this relation.
+- **Firebase `admin.initializeApp()` is a singleton** — calling it in a constructor throws `FirebaseAppError: already exists` on re-instantiation. It now lives in `NotificationModule.onModuleInit()` with an `admin.apps.length` guard. Never move it back to a controller or service constructor.
+- **`$transaction` callback must use its `prisma` argument** — calling `this.prisma.X` inside a `$transaction(async (prisma) => { ... })` callback bypasses the transaction boundary. Always use the scoped `prisma` arg for every write inside the callback.
+- **Side effects (Firebase, email, etc.) must happen after `$transaction` resolves** — external calls inside a DB transaction cannot be rolled back and block rollback of DB writes if they throw. Always move them to after `await this.prisma.$transaction(...)`.
+- **Token model now has `userId String?`** — `invalidateAllUserTokens` uses `deleteMany({ where: { userId } })`. Existing tokens with `userId = null` are unaffected. New tokens store `userId` via `loginToken(token, userId)`.
+- **`catch (error)` typed as `unknown` in strict TS** — access `error.message` only after narrowing: `error instanceof Error ? error.message : String(error)`.
 
 ## Project-Specific Rules
 
@@ -127,4 +134,4 @@ Every module under `src/modules/` follows this pattern (reference: `auth` module
 ## Status
 
 Bootstrapped: 2026-04-21
-Last updated: 2026-04-21
+Last updated: 2026-04-30

@@ -44,4 +44,4 @@ File: `src/modules/admin/services/admin-mutation.service.ts`, lines 91–94.
 
 ## Status
 
-[ ] In Progress [x] Implemented [ ] Verified
+[x] In Progress [x] Implemented [x] Verified

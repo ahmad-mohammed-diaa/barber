@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Language } from '@prisma/client';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 import {
   createTranslation,
   Translation,
   translationDes,
-} from 'src/class-type/translation';
+} from '../../../common/class-type/translation';
 
 @Injectable()
 export class ClientPackagesMutationService {

@@ -3,13 +3,14 @@ import { Language, Role, User } from '@prisma/client';
 import { OrderQueryService } from './services/order-query.service';
 import { OrderListingService } from './services/order-listing.service';
 import { OrderPricingService } from './services/order-pricing.service';
-import { OrderBookingService } from './services/order-booking.service';
+import { OrderCreateService } from './services/order-create.service';
 import { OrderLifecycleService } from './services/order-lifecycle.service';
 import { OrderMutationService } from './services/order-mutation.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
 import { PaidOrderBodyDto } from './dto/paid-order-body.dto';
+import { OrderReviewService } from './services/order-review.service';
 
 @Injectable()
 export class OrderService {
@@ -17,20 +18,36 @@ export class OrderService {
     private readonly orderQuery: OrderQueryService,
     private readonly orderListing: OrderListingService,
     private readonly orderPricing: OrderPricingService,
-    private readonly orderBooking: OrderBookingService,
+    private readonly orderCreate: OrderCreateService,
     private readonly orderLifecycle: OrderLifecycleService,
     private readonly orderMutation: OrderMutationService,
+    private readonly orderReview: OrderReviewService,
   ) {}
 
   getAllOrders(userId: string, lang: Language) {
     return this.orderListing.getAllOrders(userId, lang);
   }
 
-  getAllOrdersDateRange(user: User, lang: Language, fromDate: Date, toDate: Date) {
-    return this.orderListing.getAllOrdersDateRange(user, lang, fromDate, toDate);
+  getAllOrdersDateRange(
+    user: User,
+    lang: Language,
+    fromDate: Date,
+    toDate: Date,
+  ) {
+    return this.orderListing.getAllOrdersDateRange(
+      user,
+      lang,
+      fromDate,
+      toDate,
+    );
   }
 
-  GetBarberOrders(userId: string, lang: Language, fromDate?: Date, toDate?: Date) {
+  GetBarberOrders(
+    userId: string,
+    lang: Language,
+    fromDate?: Date,
+    toDate?: Date,
+  ) {
     return this.orderListing.GetBarberOrders(userId, lang, fromDate, toDate);
   }
 
@@ -78,8 +95,8 @@ export class OrderService {
     return this.orderLifecycle.completeOrder(id);
   }
 
-  GetData(orderDto: CreateOrderDto, userId: string, lang: Language) {
-    return this.orderBooking.GetData(orderDto, userId, lang);
+  ReviewOrder(orderDto: CreateOrderDto, userId: string, lang: Language) {
+    return this.orderReview.execute(orderDto, userId, lang);
   }
 
   getSlots(date: string, barberId?: string, totalDuration?: number) {
@@ -95,7 +112,7 @@ export class OrderService {
   }
 
   createOrder(dto: CreateOrderDto, userId: string, lang: Language) {
-    return this.orderBooking.createOrder(dto, userId, lang);
+    return this.orderCreate.execute(dto, userId, lang);
   }
 
   generateSlot(start: number, end: number) {

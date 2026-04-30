@@ -54,4 +54,4 @@ File: `src/modules/notification/notification.controller.ts`, lines 32–41.
 - Sending a notification still works end-to-end
 
 ## Status
-[ ] In Progress [ ] Implemented [ ] Verified
+[x] In Progress [x] Implemented [x] Verified

@@ -1,4 +1,4 @@
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 import { CreateAboutDto, CreateQuestionDto } from './dto/create-static.dto';
 import { UpdateStaticDto } from './dto/update-static.dto';
 

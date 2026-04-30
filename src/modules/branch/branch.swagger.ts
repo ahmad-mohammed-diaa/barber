@@ -1,5 +1,5 @@
 import { CategoryType } from '@prisma/client';
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 import { CreateBranchDto, UpdateBranchDto } from './dto';
 
 export const CreateBranchDoc = () =>

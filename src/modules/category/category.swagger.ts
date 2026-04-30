@@ -1,6 +1,6 @@
 import { CategoryType } from '@prisma/client';
 
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 export const FindAllCategoriesDoc = () =>

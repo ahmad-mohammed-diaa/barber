@@ -45,4 +45,4 @@ Remove all raw `console.log` calls from notification services that leak FCM toke
 
 ## Status
 
-[ ] In Progress [x] Implemented [ ] Verified
+[x] In Progress [x] Implemented [x] Verified

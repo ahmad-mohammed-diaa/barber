@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Complain, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateComplainDto } from '../dto/create-complain.dto';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 import { ComplainQueryService } from './complain-query.service';
 
 @Injectable()

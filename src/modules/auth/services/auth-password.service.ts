@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../../../prisma/prisma.service';
 import { hash } from 'bcrypt';
 import { Role } from '@prisma/client';
-import { DEFAULT_PASSWORD } from '../../../utils/constants';
+import { DEFAULT_PASSWORD } from '../../../common/utils/constants';
 import { TokenOperationsService } from './token-operations.service';
 
 @Injectable()

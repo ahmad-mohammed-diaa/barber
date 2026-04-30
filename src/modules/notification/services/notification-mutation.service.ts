@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { User } from '@prisma/client';
-import { PrismaService } from '@/prisma/prisma.service';
-import { AppSuccess } from '@/utils/AppSuccess';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 import * as admin from 'firebase-admin';
 
 @Injectable()

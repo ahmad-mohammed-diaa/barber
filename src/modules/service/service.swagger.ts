@@ -1,4 +1,4 @@
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 import { CreateServiceDto, UpdateServiceDto, ServiceStatusDto } from './dto';
 
 export const FindAllServicesDoc = () =>

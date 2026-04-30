@@ -15,15 +15,15 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
-import { AuthGuard } from '../../../guard/auth.guard';
+import { AuthGuard } from '../../common/guard/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { RateBarberDto } from './dto/rate-barber.dto';
 import { FindAllUsersDto } from './dto/find-all-users.dto';
 import { FindAllClientsDto } from './dto/find-all-clients.dto';
-import { UserData } from '../../../decorators/user.decorator';
+import { UserData } from '../../common/decorators/user.decorator';
 import { User } from '@prisma/client';
-import { multerConfig } from '../../config/multer.config';
+import { multerConfig } from '../../common/config/multer.config';
 import { ResponseMessage } from '../../common/decorators/response-message.decorator';
 import {
   FindAllUsersDoc,

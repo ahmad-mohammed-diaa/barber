@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
-import { AuthGuard } from '../../../guard/auth.guard';
-import { UserData } from '../../../decorators/user.decorator';
+import { AuthGuard } from '../../common/guard/auth.guard';
+import { UserData } from '../../common/decorators/user.decorator';
 import { User } from '@prisma/client';
 import { NotificationScheduler } from './services/notificationScheduler';
 import {

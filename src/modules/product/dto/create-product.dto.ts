@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsString } from 'class-validator';
-import { translationDto } from 'src/class-type/translation';
+import { translationDto } from '../../../common/class-type/translation';
 
 export class CreateProductDto {
   @IsString()

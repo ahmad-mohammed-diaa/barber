@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 
 @Injectable()
 export class ProductQueryService {

@@ -46,4 +46,4 @@ File: `src/modules/notification/services/notification-mutation.service.ts`, line
 - Sending a broadcast notification creates one DB write total, not N writes
 
 ## Status
-[ ] In Progress [ ] Implemented [ ] Verified
+[x] In Progress [x] Implemented [x] Verified

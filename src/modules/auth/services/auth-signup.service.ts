@@ -7,7 +7,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { hash } from 'bcrypt';
 import { Role, User } from '@prisma/client';
 import { RegisterDto } from '../dto/auth-register-dto';
-import { Random } from '../../../utils/generate';
+import { Random } from '../../../common/utils/generate';
 import { AuthSlotService } from './auth-slot.service';
 import { CreateUserService } from './create-user.service';
 import { ReferralCodeService } from './referral-code.service';

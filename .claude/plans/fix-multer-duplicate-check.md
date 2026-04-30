@@ -27,4 +27,4 @@ Remove the copy-pasted duplicate `if (!formats.includes(extension))` block.
 - Uploading an invalid file type still returns 415 Unsupported Media Type
 
 ## Status
-[ ] In Progress [ ] Implemented [ ] Verified
+[x] In Progress [x] Implemented [x] Verified

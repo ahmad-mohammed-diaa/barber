@@ -1,4 +1,4 @@
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 import { CreateComplainDto } from './dto/create-complain.dto';
 
 export const CreateComplainDoc = () =>

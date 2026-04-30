@@ -1,4 +1,4 @@
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { Language } from '@prisma/client';
 

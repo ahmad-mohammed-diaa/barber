@@ -1,6 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 import { PromoCode } from '@prisma/client';
 
 @Injectable()

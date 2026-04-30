@@ -13,12 +13,12 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { PackageService } from './package.service';
 import { CreatePackageDto } from './dto/create-package.dto';
-import { AuthGuard } from '../../../guard/auth.guard';
-import { RolesGuard } from '../../../guard/role.guard';
-import { Roles } from '../../../decorators/roles.decorator';
+import { AuthGuard } from '../../common/guard/auth.guard';
+import { RolesGuard } from '../../common/guard/role.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from '@/config/multer.config';
-import { Lang } from '../../../decorators/accept.language';
+import { multerConfig } from '../../common/config/multer.config';
+import { Lang } from '../../common/decorators/accept.language';
 import { Language } from '@prisma/client';
 import {
   CreatePackageDoc,

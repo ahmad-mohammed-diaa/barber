@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, Role } from '@prisma/client';
-import { PrismaService } from '@/prisma/prisma.service';
-import { AppSuccess } from '@/utils/AppSuccess';
-import { TranslateName } from '../../../../lib/lib';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
+import { TranslateName } from '../../../common/lib/lib';
 import { startOfDay, endOfDay } from 'date-fns';
 
 @Injectable()

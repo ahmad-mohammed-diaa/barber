@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Complain } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 
 @Injectable()
 export class ComplainQueryService {

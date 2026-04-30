@@ -10,8 +10,8 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { PromoCodeService } from './promo-code.service';
 import { CreatePromoCodeDto } from './dto/create-promo-code.dto';
-import { RolesGuard } from '../../../guard/role.guard';
-import { AuthGuard } from '../../../guard/auth.guard';
+import { RolesGuard } from '../../common/guard/role.guard';
+import { AuthGuard } from '../../common/guard/auth.guard';
 import {
   CreatePromoCodeDoc,
   GetAllPromoCodesDoc,

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '@/prisma/prisma.service';
-import { AppSuccess } from '@/utils/AppSuccess';
-import { comparePassword, hashedPassword } from '@/utils/lib';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
+import { comparePassword, hashedPassword } from '../../../common/utils/lib';
 import { CreateAdminDto } from '../dto/create-admin.dto';
 import { UpdateAdminDto } from '../dto/update-admin.dto';
 

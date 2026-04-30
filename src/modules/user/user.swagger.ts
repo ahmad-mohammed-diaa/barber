@@ -1,6 +1,6 @@
 import { Role } from '@prisma/client';
 
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 
 export const FindAllUsersDoc = () =>
   ApiDoc({

@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreatePackageDto } from '../dto/create-package.dto';
-import { PrismaService } from '@/prisma/prisma.service';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { createTranslation } from 'src/class-type/translation';
+import { createTranslation } from '../../../common/class-type/translation';
 import { NotificationService } from '../../notification/notification.service';
 
 @Injectable()

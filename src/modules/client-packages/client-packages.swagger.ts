@@ -1,4 +1,4 @@
-import { ApiDoc } from '@/common/lib/swagger';
+import { ApiDoc } from '../../common/lib/swagger';
 import { Language } from '@prisma/client';
 
 export const CreateClientPackageDoc = () =>

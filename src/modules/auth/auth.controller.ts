@@ -16,12 +16,12 @@ import { RegisterDto } from './dto/auth-register-dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ReferralCodeDto } from './dto/referral-code.dto';
-import { AuthGuard } from '../../../guard/auth.guard';
-import { UserData } from '../../../decorators/user.decorator';
+import { AuthGuard } from '../../common/guard/auth.guard';
+import { UserData } from '../../common/decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from '../../config/multer.config';
-import { Roles } from '../../../decorators/roles.decorator';
-import { RolesGuard } from '../../../guard/role.guard';
+import { multerConfig } from '../../common/config/multer.config';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard } from '../../common/guard/role.guard';
 import { ResponseMessage } from '../../common/decorators/response-message.decorator';
 import {
   SignupDoc,

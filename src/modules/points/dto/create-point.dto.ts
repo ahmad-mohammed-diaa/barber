@@ -1,5 +1,5 @@
 import { IsArray, IsNotEmpty, IsNumber } from 'class-validator';
-import { translationDto } from '@/class-type/translation';
+import { translationDto } from '../../../common/class-type/translation';
 import { Transform } from 'class-transformer';
 
 export class CreatePointDto {

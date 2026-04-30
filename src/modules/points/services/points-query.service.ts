@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Language } from '@prisma/client';
-import { PrismaService } from '@/prisma/prisma.service';
-import { AppSuccess } from '@/utils/AppSuccess';
-import { Translation } from '@/class-type/translation';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
+import { Translation } from '../../../common/class-type/translation';
 
 @Injectable()
 export class PointsQueryService {

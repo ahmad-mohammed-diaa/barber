@@ -38,4 +38,4 @@ File: `src/modules/client-packages/client-packages.controller.ts`, line 56.
 
 ## Status
 
-[ ] In Progress [x] Implemented [ ] Verified
+[x] In Progress [x] Implemented [x] Verified

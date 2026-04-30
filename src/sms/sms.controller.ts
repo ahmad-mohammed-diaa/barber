@@ -6,9 +6,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { SmsService } from './sms.service';
-import { multerConfig } from 'src/config/multer.config';
+import { multerConfig } from '../common/config/multer.config';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { RegisterDto } from 'src/auth/dto/auth-register-dto';
+import { RegisterDto } from '../modules/auth/dto/auth-register-dto';
 
 @Controller('sms')
 export class SmsController {

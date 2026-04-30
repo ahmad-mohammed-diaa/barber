@@ -14,12 +14,12 @@ import { ApiTags } from '@nestjs/swagger';
 import { CategoryService } from './category.service';
 import { CategoryType, Language, User } from '@prisma/client';
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { AuthGuard } from '../../../guard/auth.guard';
-import { RolesGuard } from '../../../guard/role.guard';
-import { Roles } from '../../../decorators/roles.decorator';
+import { AuthGuard } from '../../common/guard/auth.guard';
+import { RolesGuard } from '../../common/guard/role.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { UserData } from '../../../decorators/user.decorator';
-import { Lang } from '../../../decorators/accept.language';
+import { UserData } from '../../common/decorators/user.decorator';
+import { Lang } from '../../common/decorators/accept.language';
 import {
   FindAllCategoriesDoc,
   FindCategoryByIdDoc,

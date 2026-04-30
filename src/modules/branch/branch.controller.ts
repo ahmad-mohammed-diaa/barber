@@ -17,12 +17,12 @@ import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from '../../config/multer.config';
-import { Lang } from '../../../decorators/accept.language';
+import { multerConfig } from '../../common/config/multer.config';
+import { Lang } from '../../common/decorators/accept.language';
 import { CategoryType, Language } from '@prisma/client';
-import { AuthGuard } from '../../../guard/auth.guard';
-import { RolesGuard } from '../../../guard/role.guard';
-import { Roles } from '../../../decorators/roles.decorator';
+import { AuthGuard } from '../../common/guard/auth.guard';
+import { RolesGuard } from '../../common/guard/role.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { ResponseMessage } from '../../common/decorators/response-message.decorator';
 import {
   CreateBranchDoc,

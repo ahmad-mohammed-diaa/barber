@@ -17,11 +17,11 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { ServiceStatusDto } from './dto/service-status.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from '../../config/multer.config';
-import { Lang } from '../../../decorators/accept.language';
-import { AuthGuard } from '../../../guard/auth.guard';
-import { RolesGuard } from '../../../guard/role.guard';
-import { Roles } from '../../../decorators/roles.decorator';
+import { multerConfig } from '../../common/config/multer.config';
+import { Lang } from '../../common/decorators/accept.language';
+import { AuthGuard } from '../../common/guard/auth.guard';
+import { RolesGuard } from '../../common/guard/role.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { ResponseMessage } from '../../common/decorators/response-message.decorator';
 import {
   FindAllServicesDoc,

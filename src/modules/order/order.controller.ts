@@ -11,12 +11,12 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { UserData } from '../../../decorators/user.decorator';
+import { UserData } from '../../common/decorators/user.decorator';
 import { Language, User } from '@prisma/client';
-import { AuthGuard } from '../../../guard/auth.guard';
-import { RolesGuard } from '../../../guard/role.guard';
-import { Roles } from '../../../decorators/roles.decorator';
-import { Lang } from '../../../decorators/accept.language';
+import { AuthGuard } from '../../common/guard/auth.guard';
+import { RolesGuard } from '../../common/guard/role.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Lang } from '../../common/decorators/accept.language';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
 import { PaidOrderBodyDto } from './dto/paid-order-body.dto';
@@ -76,7 +76,12 @@ export class OrderController {
     oneMonthBefore.setMonth(today.getMonth() - 1);
     const fromDate = new Date(from ?? oneMonthBefore);
     const toDate = new Date(to ?? new Date());
-    return this.orderService.getAllOrdersDateRange(user, lang, fromDate, toDate);
+    return this.orderService.getAllOrdersDateRange(
+      user,
+      lang,
+      fromDate,
+      toDate,
+    );
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
@@ -224,7 +229,7 @@ export class OrderController {
     @UserData('user') user: User,
     @Lang() lang: Language,
   ) {
-    return this.orderService.GetData(orderDto, user.id, lang);
+    return this.orderService.ReviewOrder(orderDto, user.id, lang);
   }
 
   @UseGuards(AuthGuard(false), RolesGuard)
@@ -232,7 +237,11 @@ export class OrderController {
   @ResponseMessage('Slots fetched successfully')
   @GetSlotsDoc()
   async getSlots(@Query() query: GetSlotsQueryDto) {
-    return this.orderService.getSlots(query.date, query.barberId, query.totalDuration);
+    return this.orderService.getSlots(
+      query.date,
+      query.barberId,
+      query.totalDuration,
+    );
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

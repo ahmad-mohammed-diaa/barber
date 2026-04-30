@@ -8,7 +8,7 @@ import {
   User,
 } from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
-import { Translation } from '../../../class-type/translation';
+import { Translation } from '../../../common/class-type/translation';
 import { getTranslationNames } from '../../../common/lib/lib';
 
 @Injectable()

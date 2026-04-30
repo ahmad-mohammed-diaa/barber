@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CreatePromoCodeDto } from '../dto/create-promo-code.dto';
-import { PrismaService } from '@/prisma/prisma.service';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 import { PromoCode } from '@prisma/client';
-import { Random } from 'src/utils/generate';
+import { Random } from '../../../common/utils/generate';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()

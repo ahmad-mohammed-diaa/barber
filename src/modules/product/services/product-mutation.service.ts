@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { UpdateProductDto } from '../dto/update-product.dto';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { AppSuccess } from '../../../common/utils/AppSuccess';
 import {
   createTranslation,
   updateTranslation,
-} from 'src/class-type/translation';
+} from '../../../common/class-type/translation';
 
 @Injectable()
 export class ProductMutationService {

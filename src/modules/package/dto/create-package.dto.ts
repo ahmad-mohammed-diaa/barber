@@ -8,7 +8,7 @@ import {
   IsNumber,
   IsOptional,
 } from 'class-validator';
-import { translationDto } from 'src/class-type/translation';
+import { translationDto } from '../../../common/class-type/translation';
 
 export class CreatePackageDto {
   @IsNotEmpty()

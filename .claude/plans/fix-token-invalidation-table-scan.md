@@ -44,4 +44,4 @@ Stop `invalidateAllUserTokens` from fetching every row in the Token table and de
 - Login → change password → old token rejected on next request
 
 ## Status
-[ ] In Progress [ ] Implemented [ ] Verified
+[x] In Progress [x] Implemented [x] Verified
