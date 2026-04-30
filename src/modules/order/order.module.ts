@@ -10,6 +10,7 @@ import { OrderMutationService } from './services/order-mutation.service';
 import { PromoCodeModule } from '../promo-code/promo-code.module';
 import { NotificationModule } from '../notification/notification.module';
 import { OrderReviewService } from './services/order-review.service';
+import { OrderSharedService } from './services/order-shared.service';
 
 @Module({
   imports: [PromoCodeModule, NotificationModule],
@@ -19,6 +20,7 @@ import { OrderReviewService } from './services/order-review.service';
     OrderQueryService,
     OrderListingService,
     OrderPricingService,
+    OrderSharedService,
     OrderCreateService,
     OrderLifecycleService,
     OrderMutationService,

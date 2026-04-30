@@ -2,34 +2,21 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  HttpException,
   Injectable,
-  InternalServerErrorException,
-  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { PromoCodeService } from '../../promo-code/promo-code.service';
-import { OrderQueryService } from './order-query.service';
-import { OrderPricingService } from './order-pricing.service';
 import { CreateOrderDto } from '../dto/create-order.dto';
-import { Language, Service } from '@prisma/client';
+import { Language } from '@prisma/client';
 import { format } from 'date-fns';
-
-interface ServiceWithFreeFlag extends Service {
-  isFree: boolean;
-}
+import { OrderSharedService } from './order-shared.service';
 
 @Injectable()
 export class OrderCreateService {
-  private readonly logger = new Logger(OrderCreateService.name);
-
   constructor(
     private readonly prisma: PrismaService,
-    private readonly promoCodeService: PromoCodeService,
-    private readonly orderQuery: OrderQueryService,
-    private readonly orderPricing: OrderPricingService,
+    private readonly orderShared: OrderSharedService,
   ) {}
 
   async execute(
@@ -55,20 +42,11 @@ export class OrderCreateService {
     if (points && points < 1000)
       throw new BadRequestException('Minimum points required is 1000');
 
-    const allServices = [] as ServiceWithFreeFlag[];
     const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
 
-    const another =
-      phone && (await this.prisma.user.findUnique({ where: { phone } }));
-    userId = another ? another.id : userId;
-
-    const FetchedServices = await this.prisma.service.findMany({
-      where: { id: { in: service } },
-    });
-    const totalDuration = FetchedServices.reduce(
-      (acc, s) => acc + s.duration,
-      0,
-    );
+    const resolvedUserId = await this.orderShared.resolveUserId(phone, userId);
+    const { fetchedServices, totalDuration } =
+      await this.orderShared.fetchServices(service);
 
     const [existingOrder, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([
@@ -85,22 +63,13 @@ export class OrderCreateService {
           },
         }),
         this.prisma.user.findFirst({
-          where: { id: userId },
+          where: { id: resolvedUserId },
           select: { UserOrders: { where: { promoCode, status: 'PENDING' } } },
         }),
-        barberId
-          ? (
-              await this.orderPricing.getSlots(
-                dateWithoutTime,
-                barberId,
-                totalDuration,
-              )
-            ).slots
-          : [],
-        promoCode &&
-          (await this.promoCodeService.validatePromoCode(promoCode)).data,
+        this.orderShared.fetchSlots(barberId, dateWithoutTime, totalDuration),
+        this.orderShared.validatePromoCode(promoCode),
         this.prisma.user.findUnique({
-          where: { id: userId },
+          where: { id: resolvedUserId },
           select: {
             client: { select: { points: true, ban: true } },
             role: true,
@@ -114,9 +83,8 @@ export class OrderCreateService {
     const settings = await this.prisma.settings.findFirst({});
     if (!settings) throw new NotFoundException('Settings not found');
 
-    const now = new Date();
     const diffInDays =
-      (new Date(dateWithoutTime).getTime() - now.getTime()) /
+      (new Date(dateWithoutTime).getTime() - new Date().getTime()) /
       (1000 * 60 * 60 * 24);
     if (diffInDays > settings.maxDaysBooking)
       throw new ConflictException(
@@ -131,93 +99,43 @@ export class OrderCreateService {
     if (barberId && !slots.includes(slot))
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
 
-    const barber = barberId
-      ? await this.prisma.barber.findUnique({
-          where: { id: barberId },
-          include: { user: { select: { firstName: true, lastName: true } } },
-        })
-      : null;
-
-    const branch = await this.prisma.branch.findUnique({
-      where: { id: branchId },
-    });
-    const Services = await this.prisma.service.findMany({
-      where: { id: { in: service } },
-    });
+    const [barber, branch] = await Promise.all([
+      barberId
+        ? this.prisma.barber.findUnique({
+            where: { id: barberId },
+            include: { user: { select: { firstName: true, lastName: true } } },
+          })
+        : null,
+      this.prisma.branch.findUnique({ where: { id: branchId } }),
+    ]);
 
     if (barberId && !barber) throw new NotFoundException('Barber not found');
     if (!branch) throw new NotFoundException('Branch not found');
-    if (!Services || !Services.length)
+    if (!fetchedServices.length)
       throw new NotFoundException('Service not found');
 
-    const clientPackages = await this.prisma.clientPackages.findMany({
-      where: {
-        clientId: userId,
-        packageService: { some: { isActive: true, remainingCount: { gt: 0 } } },
-      },
-      select: {
-        id: true,
-        type: true,
-        isActive: true,
-        packageService: { select: { service: true } },
-      },
-    });
-
-    const selectedPackage = clientPackages.filter((pkg) =>
-      usedPackage?.includes(pkg.id),
-    );
-    const notValidPackage = selectedPackage.filter((pkg) => !pkg.isActive);
-    if (notValidPackage.length > 0)
-      throw new BadRequestException('This package is not valid anymore');
-
-    const single = clientPackages
-      .filter((pkg) => pkg.type === 'SINGLE')
-      .flatMap((pkg) =>
-        pkg.packageService.flatMap((ps) => ({ ...ps.service, pkgId: pkg.id })),
+    const { allServices, costServices } =
+      await this.orderShared.resolveServiceList(
+        resolvedUserId,
+        user.role,
+        fetchedServices,
+        usedPackage,
       );
 
-    allServices.push(
-      ...FetchedServices.map((srv) => ({
-        ...srv,
-        isFree: single.some((s) => s.id === srv.id),
-      })),
-    );
-
-    for (const pkg of selectedPackage) {
-      if (pkg.type === 'SINGLE')
-        throw new ConflictException('Can not select Packages of type SINGLE');
-      allServices.push(
-        ...pkg.packageService.flatMap((ps) => ({
-          ...ps.service,
-          isFree: true,
-        })),
+    const { subTotal, pointsDiscount, discount, total } =
+      this.orderShared.calculatePricing(
+        costServices,
+        points,
+        null,
+        validPromoCode,
       );
-    }
-
-    const costServices = allServices.filter((s) => !s.isFree);
-    const subTotal = costServices.reduce((acc, s) => acc + s.price, 0);
 
     let pointsToUse = 0;
-    let pointsDiscount = 0;
     if (points) {
-      if (points < 1000)
-        throw new BadRequestException('Minimum points required is 1000');
-      if (points > user?.client?.points)
+      if (points > (user?.client?.points ?? 0))
         throw new BadRequestException('You do not have enough points');
-      pointsDiscount = Math.floor(points / 1000) * 50;
-      if (pointsDiscount > subTotal)
-        throw new BadRequestException(
-          'Points discount cannot exceed the subtotal',
-        );
       pointsToUse = points;
     }
-
-    const discount = promoCode
-      ? validPromoCode?.type === 'PERCENTAGE'
-        ? (subTotal * validPromoCode?.discount) / 100
-        : validPromoCode?.discount
-      : 0;
-    const total = Math.max(subTotal - discount - pointsDiscount, 0);
 
     if (user?.client?.ban) throw new ForbiddenException('You are banned');
 
@@ -229,14 +147,14 @@ export class OrderCreateService {
           ...rest,
           ...(validPromoCode && { promoCode }),
           slot,
-          userId,
+          userId: resolvedUserId,
           ...(barberId && { barberId }),
           barberName: `${barber?.user.firstName} ${barber?.user.lastName}`,
           branchId,
           points: pointsToUse,
-          usedPackage: selectedPackage
-            ? selectedPackage.flatMap((e) => e.id)
-            : [],
+          usedPackage: allServices
+            .filter((s) => s.isFree)
+            .map((s) => s.id),
           date: new Date(dateWithoutTime),
           service: { connect: allServices.map((s) => ({ id: s.id })) },
           subTotal,
@@ -258,7 +176,7 @@ export class OrderCreateService {
             isActive: true,
           },
         });
-        const pkgServiceIds = packageService.flatMap((ps) => ps.id);
+        const pkgServiceIds = packageService.map((ps) => ps.id);
         if (pkgServiceIds.length > 0) {
           await prisma.packagesServices.updateMany({
             where: {
@@ -273,7 +191,7 @@ export class OrderCreateService {
             },
           });
         }
-        if (selectedPackage) {
+        if (usedPackage?.length) {
           await prisma.clientPackages.updateMany({
             where: {
               id: { in: usedPackage },
@@ -284,9 +202,10 @@ export class OrderCreateService {
           });
         }
       });
+
       if (pointsToUse > 0) {
         await this.prisma.user.update({
-          where: { id: userId },
+          where: { id: resolvedUserId },
           data: { client: { update: { points: { decrement: pointsToUse } } } },
         });
       }
@@ -296,7 +215,7 @@ export class OrderCreateService {
           ...rest,
           ...(validPromoCode && { promoCode }),
           slot,
-          userId,
+          userId: resolvedUserId,
           barberId,
           barberName:
             barberName || `${barber?.user.firstName} ${barber?.user.lastName}`,
@@ -304,10 +223,10 @@ export class OrderCreateService {
           points: pointsToUse,
           discount: validPromoCode ? validPromoCode.discount : 0,
           type: validPromoCode ? validPromoCode.type : 'AMOUNT',
-          usedPackage: selectedPackage
-            ? selectedPackage.flatMap((e) => e.id)
-            : [],
-          freeService: allServices.filter((s) => s.isFree).flatMap((s) => s.id),
+          usedPackage: allServices
+            .filter((s) => s.isFree)
+            .map((s) => s.id),
+          freeService: allServices.filter((s) => s.isFree).map((s) => s.id),
           date: new Date(dateWithoutTime),
           service: { connect: allServices.map((s) => ({ id: s.id })) },
           subTotal,
@@ -320,18 +239,6 @@ export class OrderCreateService {
     }
 
     const duration = allServices.reduce((acc, s) => acc + s.duration, 0);
-    const discountDisplay =
-      promoCode && pointsDiscount > 0
-        ? validPromoCode?.type === 'PERCENTAGE'
-          ? `${validPromoCode?.discount}% + ${pointsDiscount}EGP`
-          : `${discount}EGP + ${pointsDiscount}EGP`
-        : promoCode
-          ? validPromoCode?.type === 'PERCENTAGE'
-            ? `${validPromoCode?.discount}%`
-            : `${validPromoCode?.discount}EGP`
-          : pointsDiscount > 0
-            ? `${pointsDiscount}EGP`
-            : '0';
 
     return {
       date: format(order.date, 'yyyy-MM-dd'),
@@ -343,9 +250,13 @@ export class OrderCreateService {
       createdAt: order.createdAt,
       updatedAt: null,
       duration: `${duration} ${lang === 'AR' ? 'دقيقة' : 'minutes'}`,
-      promoCode: promoCode ? promoCode : null,
+      promoCode: promoCode ?? null,
       subTotal: order.subTotal?.toString(),
-      discount: discountDisplay,
+      discount: this.orderShared.buildDiscountDisplay(
+        validPromoCode,
+        pointsDiscount,
+        discount,
+      ),
       total: order.total?.toString(),
     };
   }
