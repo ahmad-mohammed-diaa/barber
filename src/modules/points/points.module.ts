@@ -7,6 +7,6 @@ import { PointsMutationService } from './services/points-mutation.service';
 @Module({
   controllers: [PointsController],
   providers: [PointsService, PointsQueryService, PointsMutationService],
-  exports: [PointsService],
+  exports: [PointsQueryService],
 })
 export class PointsModule {}

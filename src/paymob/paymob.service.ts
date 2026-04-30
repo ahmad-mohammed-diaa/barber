@@ -2,11 +2,11 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as crypto from 'crypto';
-import { ClientPackagesService } from '../modules/client-packages/client-packages.service';
 import { Language, User } from '@prisma/client';
-import { PointsService } from '../modules/points/points.service';
 import { Response } from 'express';
 import { join } from 'path';
+import { ClientPackagesQueryService } from '@/modules/client-packages/services/client-packages-query.service';
+import { PointsMutationService } from '@/modules/points/services/points-mutation.service';
 
 @Injectable()
 export class PaymobService {
@@ -14,8 +14,8 @@ export class PaymobService {
   private readonly apiKey = process.env.PAYMOB_API_KEY;
 
   constructor(
-    private readonly points: PointsService,
-    private readonly packages: ClientPackagesService,
+    private readonly points: PointsMutationService,
+    private readonly packages: ClientPackagesQueryService,
     private readonly prisma: PrismaService,
   ) {}
 

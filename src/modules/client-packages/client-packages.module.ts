@@ -11,6 +11,6 @@ import { ClientPackagesMutationService } from './services/client-packages-mutati
     ClientPackagesQueryService,
     ClientPackagesMutationService,
   ],
-  exports: [ClientPackagesService],
+  exports: [ClientPackagesService, ClientPackagesQueryService],
 })
 export class ClientPackagesModule {}
