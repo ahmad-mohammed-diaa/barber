@@ -8,6 +8,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { OrderQueryService } from './order-query.service';
 import { Language, OrderStatus, BookingStatus } from '@prisma/client';
 import { toZonedTime } from 'date-fns-tz';
+import { getTranslationNames } from '@/common/lib/lib';
 
 @Injectable()
 export class OrderPricingService {
@@ -37,16 +38,12 @@ export class OrderPricingService {
       const { Translation, services, ...rest } = category;
       return {
         ...rest,
-        nameEN: Translation.find((t) => t.language === 'EN')?.name,
-        nameAR: Translation.find((t) => t.language === 'AR')?.name,
-        name: Translation.find((t) => t.language === language)?.name,
+        ...getTranslationNames(Translation, language),
         services: services.map((service) => {
           const { Translation, ...rest } = service;
           return {
             ...rest,
-            nameEN: Translation.find((t) => t.language === 'EN')?.name,
-            nameAR: Translation.find((t) => t.language === 'AR')?.name,
-            name: Translation.find((t) => t.language === language)?.name,
+            ...getTranslationNames(Translation, language),
           };
         }),
       };

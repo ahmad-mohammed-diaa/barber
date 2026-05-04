@@ -57,9 +57,7 @@ export class OrderListingService {
 
     return branches.map((branch) => ({
       id: branch.id,
-      nameEN: branch.Translation.find((t) => t.language === 'EN')?.name,
-      nameAR: branch.Translation.find((t) => t.language === 'AR')?.name,
-      name: branch.Translation.find((t) => t.language === language)?.name,
+      ...getTranslationNames(branch.Translation, language),
       orders: branch.Order.map((order) => {
         const {
           id,
@@ -486,9 +484,7 @@ export class OrderListingService {
           const { Translation, ...rest } = s;
           return {
             ...rest,
-            nameEN: Translation.find((t) => t.language === 'EN')?.name,
-            nameAR: Translation.find((t) => t.language === 'AR')?.name,
-            name: Translation.find((t) => t.language === language)?.name,
+            ...getTranslationNames(Translation, language),
           };
         });
 
@@ -506,9 +502,7 @@ export class OrderListingService {
           services,
           branch: {
             ...branchRest,
-            nameEN: Translation.find((t) => t.language === 'EN')?.name,
-            nameAR: Translation.find((t) => t.language === 'AR')?.name,
-            name: Translation.find((t) => t.language === language)?.name,
+            ...getTranslationNames(Translation, language),
           },
           userName: `${client?.firstName}${client?.lastName}`,
           userPhone: client?.phone,

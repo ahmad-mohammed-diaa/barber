@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Language } from '@prisma/client';
 import { AppSuccess } from '../../../common/utils/AppSuccess';
 import { Translation } from '../../../common/class-type/translation';
+import { getTranslationNames } from '@/common/lib/lib';
 
 @Injectable()
 export class ClientPackagesQueryService {
@@ -36,18 +37,14 @@ export class ClientPackagesQueryService {
       const { Translation, packageService, ...rest } = clientPackage;
       return {
         ...rest,
-        nameEN: Translation.find((t) => t.language === 'EN')?.name,
-        nameAR: Translation.find((t) => t.language === 'AR')?.name,
-        name: Translation.find((t) => t.language === language)?.name,
+        ...getTranslationNames(Translation, language),
         description: Translation.find((t) => t.language === language)
           .description,
         services: packageService.map((service) => {
           const { serviceImg, Translation, ...rest } = service.service;
           return {
             ...rest,
-            nameEN: Translation.find((t) => t.language === 'EN')?.name,
-            nameAR: Translation.find((t) => t.language === 'AR')?.name,
-            name: Translation.find((t) => t.language === language)?.name,
+            ...getTranslationNames(Translation, language),
             serviceImg,
           };
         }),

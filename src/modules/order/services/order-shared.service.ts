@@ -32,8 +32,8 @@ export class OrderSharedService {
     userId: string,
   ): Promise<string> {
     if (!phone || phone === '') return userId;
-    const another = await this.prisma.user.findUnique({ where: { phone } });
-    return another ? another.id : userId;
+    const user = await this.prisma.user.findUnique({ where: { phone } });
+    return user ? user.id : userId;
   }
 
   async fetchServices(serviceIds: string[]) {
@@ -53,7 +53,9 @@ export class OrderSharedService {
     totalDuration: number,
   ): Promise<string[]> {
     if (!barberId) return [];
-    return (await this.orderPricing.getSlots(dateWithoutTime, barberId, totalDuration)).slots;
+    return (
+      await this.orderPricing.getSlots(dateWithoutTime, barberId, totalDuration)
+    ).slots;
   }
 
   async validatePromoCode(promoCode: string | undefined) {
@@ -66,7 +68,10 @@ export class OrderSharedService {
     role: string | undefined,
     fetchedServices: Service[],
     usedPackage: string[] | undefined,
-  ): Promise<{ allServices: ServiceWithFreeFlag[]; costServices: ServiceWithFreeFlag[] }> {
+  ): Promise<{
+    allServices: ServiceWithFreeFlag[];
+    costServices: ServiceWithFreeFlag[];
+  }> {
     const allServices: ServiceWithFreeFlag[] = [];
 
     if (role === 'USER') {
