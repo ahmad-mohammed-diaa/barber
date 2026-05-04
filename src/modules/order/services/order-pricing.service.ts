@@ -8,7 +8,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { OrderQueryService } from './order-query.service';
 import { Language, OrderStatus, BookingStatus } from '@prisma/client';
 import { toZonedTime } from 'date-fns-tz';
-import { getTranslationNames } from '@/common/lib/lib';
+import { getTranslationNames } from '../../../common/lib/lib';
 
 @Injectable()
 export class OrderPricingService {

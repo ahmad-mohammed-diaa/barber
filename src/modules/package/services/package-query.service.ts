@@ -3,7 +3,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { AppSuccess } from '../../../common/utils/AppSuccess';
 import { Translation } from '../../../common/class-type/translation';
 import { Language } from '@prisma/client';
-import { getTranslationNames } from '@/common/lib/lib';
+import { getTranslationNames } from '../../../common/lib/lib';
 
 @Injectable()
 export class PackageQueryService {
