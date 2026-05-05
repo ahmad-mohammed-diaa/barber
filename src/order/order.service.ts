@@ -2033,84 +2033,10 @@ export class OrderService {
     query?: { discount?: number; points?: number },
   ) {
     const { discount, points } = query ?? {};
+    const requestedDiscount =
+      discount !== undefined ? Number(discount) : undefined;
+    const requestedPoints = points !== undefined ? Number(points) : undefined;
 
-    const [currentOrder, settings] = await Promise.all([
-      this.prisma.order.findUnique({
-        where: {
-          id,
-          NOT: {
-            OR: [
-              { status: OrderStatus.PAID },
-              {
-                status: {
-                  in: [
-                    OrderStatus.ADMIN_CANCELLED,
-                    OrderStatus.CLIENT_CANCELLED,
-                    OrderStatus.BARBER_CANCELLED,
-                    OrderStatus.CASHIER_CANCELLED,
-                  ],
-                },
-              },
-            ],
-          },
-        },
-        select: { subTotal: true, total: true, userId: true },
-      }),
-      this.prisma.settings.findFirst(),
-    ]);
-
-    if (!currentOrder)
-      throw new ConflictException('Order is either PAID or cancelled');
-
-    const orderClient = currentOrder.userId
-      ? await this.prisma.client.findUnique({
-          where: { id: currentOrder.userId },
-        })
-      : null;
-
-    let total = currentOrder.total;
-    let pointsDiscount = 0;
-    let discountAmount = 0;
-
-    if (points) {
-      if (!settings) throw new NotFoundException('Settings not found');
-      const clientPoints = orderClient?.points ?? 0;
-      const limitPoints = settings.pointLimit;
-      pointsDiscount = this.validatePoints(
-        total,
-        points,
-        clientPoints,
-        limitPoints,
-      );
-      total = total - pointsDiscount;
-    }
-
-    if (discount) {
-      if (discount < 0)
-        throw new BadRequestException('Discount cannot be negative');
-
-      if (discount > 100)
-        throw new BadRequestException('Discount cannot be greater than 100%');
-
-      discountAmount = (total * discount) / 100;
-      total = total - discountAmount;
-    }
-
-    total = Math.max(total, 0);
-
-    return new AppSuccess(
-      {
-        subTotal: currentOrder.subTotal,
-        pointsDiscount: pointsDiscount,
-        discountAmount: discountAmount,
-        total: total,
-      },
-      'Order evaluated successfully',
-    );
-  }
-
-  async paidOrder(id: string, body?: { discount?: number; points?: number }) {
-    const { discount, points } = body;
     const [currentOrder, settings] = await Promise.all([
       this.prisma.order.findUnique({
         where: {
@@ -2134,6 +2060,95 @@ export class OrderService {
         select: {
           subTotal: true,
           total: true,
+          userId: true,
+          discount: true,
+          type: true,
+        },
+      }),
+      this.prisma.settings.findFirst(),
+    ]);
+
+    if (!currentOrder)
+      throw new ConflictException('Order is either PAID or cancelled');
+
+    const orderClient = currentOrder.userId
+      ? await this.prisma.client.findUnique({
+          where: { id: currentOrder.userId },
+        })
+      : null;
+
+    let total = currentOrder.total;
+    let pointsDiscount = 0;
+    let discountAmount = this.getOrderDiscountAmount(currentOrder);
+
+    if (requestedPoints) {
+      if (!settings) throw new NotFoundException('Settings not found');
+      const clientPoints = orderClient?.points ?? 0;
+      const limitPoints = settings.pointLimit;
+      pointsDiscount = this.validatePoints(
+        total,
+        requestedPoints,
+        clientPoints,
+        limitPoints,
+      );
+      total = total - pointsDiscount;
+    }
+
+    if (requestedDiscount) {
+      if (requestedDiscount < 0)
+        throw new BadRequestException('Discount cannot be negative');
+
+      if (requestedDiscount > 100)
+        throw new BadRequestException('Discount cannot be greater than 100%');
+
+      const newDiscountAmount = (total * requestedDiscount) / 100;
+      discountAmount += newDiscountAmount;
+      total = total - newDiscountAmount;
+    }
+
+    total = Math.max(total, 0);
+
+    return new AppSuccess(
+      {
+        subTotal: currentOrder.subTotal,
+        pointsDiscount: pointsDiscount,
+        discountAmount: discountAmount,
+        total: total,
+      },
+      'Order evaluated successfully',
+    );
+  }
+
+  async paidOrder(id: string, body?: { discount?: number; points?: number }) {
+    const { discount, points } = body ?? {};
+    const requestedDiscount =
+      discount !== undefined ? Number(discount) : undefined;
+    const requestedPoints = points !== undefined ? Number(points) : undefined;
+    const [currentOrder, settings] = await Promise.all([
+      this.prisma.order.findUnique({
+        where: {
+          id,
+          NOT: {
+            OR: [
+              { status: OrderStatus.PAID },
+              {
+                status: {
+                  in: [
+                    OrderStatus.ADMIN_CANCELLED,
+                    OrderStatus.CLIENT_CANCELLED,
+                    OrderStatus.BARBER_CANCELLED,
+                    OrderStatus.CASHIER_CANCELLED,
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        select: {
+          subTotal: true,
+          total: true,
+          discount: true,
+          type: true,
           client: {
             select: {
               id: true,
@@ -2154,41 +2169,44 @@ export class OrderService {
     let code: PromoCode;
     let total = currentOrder.total;
     let UsedPoints = 0;
+    let discountAmount = this.getOrderDiscountAmount(currentOrder);
 
-    if (points) {
+    if (requestedPoints) {
       if (!settings) throw new NotFoundException('Settings not found');
       const clientPoints = user.client.points ?? 0;
       const limitPoints = settings.pointLimit;
       pointsDiscount = this.validatePoints(
         total,
-        points,
+        requestedPoints,
         clientPoints,
         limitPoints,
       );
       total = total - pointsDiscount;
     }
 
-    if (discount) {
-      if (discount < 0)
+    if (requestedDiscount) {
+      if (requestedDiscount < 0)
         throw new BadRequestException('Discount cannot be negative');
 
-      if (discount > 100)
+      if (requestedDiscount > 100)
         throw new BadRequestException('Discount cannot be greater than 100%');
       code = await this.promoCodeService
         .createPromoCode({
           code: undefined,
-          discount: discount,
+          discount: requestedDiscount,
           type: 'PERCENTAGE',
           expiredAt: new Date(Date.now() + 60 * 1000),
         })
         .then((res) => res.data);
-      total = total - (total * code.discount) / 100;
+      const newDiscountAmount = (total * code.discount) / 100;
+      discountAmount += newDiscountAmount;
+      total = total - newDiscountAmount;
     }
 
     await this.findOneOrFail(id);
 
-    if (points) {
-      UsedPoints = Math.floor(points / 1000) * 1000;
+    if (requestedPoints) {
+      UsedPoints = Math.floor(requestedPoints / 1000) * 1000;
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
@@ -2205,8 +2223,8 @@ export class OrderService {
         ...(user.role === 'CASHIER' && { cashierId: user.id }),
         ...(code && {
           promoCode: code.code,
-          discount: code.discount,
-          type: 'PERCENTAGE',
+          discount: Math.round(discountAmount),
+          type: 'AMOUNT',
         }),
         points: UsedPoints ?? 0,
         subTotal: currentOrder.subTotal,
@@ -2650,6 +2668,18 @@ export class OrderService {
     }
 
     return pointsDiscount;
+  }
+
+  private getOrderDiscountAmount(order: {
+    subTotal: number;
+    discount: number;
+    type: string;
+  }) {
+    if (!order.discount) return 0;
+
+    return order.type === 'PERCENTAGE'
+      ? (order.subTotal * order.discount) / 100
+      : order.discount;
   }
 
   private slotToDatetime(dateWithoutTime: string, slot: string): Date {
