@@ -2165,7 +2165,7 @@ export class OrderService {
     let code: PromoCode;
     let total = currentOrder.total;
     let UsedPoints = 0;
-    let discountAmount = this.getOrderDiscountAmount(currentOrder);
+    let discountAmount = currentOrder.subTotal - currentOrder.total;
 
     if (requestedPoints) {
       if (!settings) throw new NotFoundException('Settings not found');
@@ -2664,18 +2664,6 @@ export class OrderService {
     }
 
     return pointsDiscount;
-  }
-
-  private getOrderDiscountAmount(order: {
-    subTotal: number;
-    discount: number;
-    type: string;
-  }) {
-    if (!order.discount) return 0;
-
-    return order.type === 'PERCENTAGE'
-      ? (order.subTotal * order.discount) / 100
-      : order.discount;
   }
 
   private slotToDatetime(dateWithoutTime: string, slot: string): Date {
