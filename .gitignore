@@ -49,6 +49,7 @@ serviceAccountKey.json
 # temp directory
 .temp
 .tmp
+*.md
 
 # Runtime data
 pids
