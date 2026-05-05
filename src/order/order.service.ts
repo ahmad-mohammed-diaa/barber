@@ -1162,7 +1162,6 @@ export class OrderService {
 
     const diffInMs = new Date(dateWithoutTime).getTime() - now.getTime(); // difference in milliseconds
     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-    console.log(diffInDays, settings.maxDaysBooking);
     if (!settings) {
       throw new NotFoundException('Settings not found');
     }
@@ -1440,9 +1439,6 @@ export class OrderService {
         },
       });
     }
-
-    console.log('Order created with barberId:', order.barberId);
-    console.log('Order created with barberName:', order.barberName);
 
     const duration = allServices.reduce(
       (acc, service) => acc + service.duration,
@@ -2079,7 +2075,7 @@ export class OrderService {
 
     let total = currentOrder.total;
     let pointsDiscount = 0;
-    let discountAmount = this.getOrderDiscountAmount(currentOrder);
+    let discountAmount = currentOrder.subTotal - currentOrder.total;
 
     if (requestedPoints) {
       if (!settings) throw new NotFoundException('Settings not found');
