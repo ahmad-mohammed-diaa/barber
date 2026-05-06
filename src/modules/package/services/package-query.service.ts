@@ -10,6 +10,7 @@ export class PackageQueryService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(language: Language) {
+    console.log('');
     const fetchedPackages = await this.prisma.offers.findMany({
       where: { offerType: 'PACKAGES', NOT: { packages: null } },
       select: {
