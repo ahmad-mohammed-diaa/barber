@@ -14,6 +14,7 @@ import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import {
   BookingStatus,
+  Client,
   Language,
   OrderStatus,
   Prisma,
@@ -783,8 +784,8 @@ export class OrderService {
       phone,
     } = createOrderDto;
     try {
-      if (points && points <= 0) {
-        throw new BadRequestException('You have exceeded the points limit');
+      if (points && points < 1000) {
+        throw new BadRequestException('Minimum points required is 1000');
       }
       const dateWithoutTime = new Date(date).toISOString().split(/[ T]/)[0];
       const allServices = [] as PrismaServiceType[];
@@ -808,7 +809,7 @@ export class OrderService {
 
       const [order, usedPromoCode, slots, validPromoCode, user] =
         await Promise.all([
-          await this.prisma.order.findFirst({
+          this.prisma.order.findFirst({
             where: {
               ...(barberId && { barberId: barberId }),
               date: this.slotToDatetime(dateWithoutTime, slot),
@@ -820,7 +821,7 @@ export class OrderService {
               ],
             },
           }),
-          await this.prisma.user.findFirst({
+          this.prisma.user.findFirst({
             where: { id: userId },
             select: {
               client: { select: { points: true } },
@@ -839,7 +840,7 @@ export class OrderService {
           promoCode &&
             (await this.promoCodeService.validatePromoCode(promoCode)).data,
 
-          await this.prisma.user.findUnique({
+          this.prisma.user.findUnique({
             where: { id: userId },
             select: {
               client: {
@@ -957,16 +958,23 @@ export class OrderService {
           throw new BadRequestException('Minimum points required is 1000');
         }
 
+        if (points > 2000) {
+          throw new BadRequestException(
+            'Points discount cannot exceed 2000 points',
+          );
+        }
+
         if (points > usedPromoCode?.client?.points) {
           throw new BadRequestException('You do not have enough points');
         }
 
         // Convert points to EGP: every 1000 points = 50 EGP
         pointsDiscount = Math.floor(points / 1000) * 50;
+        const maxPointsDiscount = subTotal * 0.4; // 40% of total
 
-        if (pointsDiscount > subTotal) {
+        if (pointsDiscount > maxPointsDiscount) {
           throw new BadRequestException(
-            'Points discount cannot exceed the subtotal',
+            `Points discount cannot exceed 40% of total`,
           );
         }
       }
@@ -977,7 +985,8 @@ export class OrderService {
           : validPromoCode?.discount
         : 0;
 
-      const total = Math.max(subTotal - discount - pointsDiscount, 0);
+      const rawTotal = Math.max(subTotal - discount - pointsDiscount, 0);
+      const total = Math.round(rawTotal / 50) * 50;
 
       const duration = allServices.reduce(
         (acc, service) => acc + service.duration,
@@ -1080,7 +1089,6 @@ export class OrderService {
       ...rest
     } = createOrderDto;
 
-    console.log('CreateOrder - barberId received:', barberId);
     if (points !== undefined && points !== null && !Number.isInteger(points)) {
       throw new BadRequestException('Points must be a number');
     }
@@ -1278,6 +1286,12 @@ export class OrderService {
         throw new BadRequestException('Minimum points required is 1000');
       }
 
+      if (points > 2000) {
+        throw new BadRequestException(
+          'Points discount cannot exceed 2000 points',
+        );
+      }
+
       if (points > user.client?.points) {
         throw new BadRequestException('You do not have enough points');
       }
@@ -1285,9 +1299,10 @@ export class OrderService {
       // Convert points to EGP: every 1000 points = 50 EGP
       pointsDiscount = Math.floor(points / 1000) * 50;
 
-      if (pointsDiscount > subTotal) {
+      const maxPointsDiscount = subTotal * 0.4; // 40% of total
+      if (pointsDiscount > maxPointsDiscount) {
         throw new BadRequestException(
-          'Points discount cannot exceed the subtotal',
+          `Points discount cannot exceed 40% of total`,
         );
       }
 
@@ -1300,7 +1315,8 @@ export class OrderService {
         : validPromoCode?.discount
       : 0;
 
-    const total = Math.max(subTotal - discount - pointsDiscount, 0);
+    const rawTotal = Math.max(subTotal - discount - pointsDiscount, 0);
+    const total = Math.round(rawTotal / 50) * 50;
 
     if (user?.client?.ban) throw new ForbiddenException('You are banned');
 
@@ -1809,7 +1825,6 @@ export class OrderService {
       });
       return new AppSuccess(null, 'Deleted services cancelled successfully');
     } catch (error) {
-      console.log('error', error);
       throw new InternalServerErrorException(
         'Failed to cancel deleted services',
       );
@@ -2165,6 +2180,7 @@ export class OrderService {
     let code: PromoCode;
     let total = currentOrder.total;
     let UsedPoints = 0;
+    let gainPoints = 0;
     let discountAmount = currentOrder.subTotal - currentOrder.total;
 
     if (requestedPoints) {
@@ -2201,12 +2217,29 @@ export class OrderService {
 
     await this.findOneOrFail(id);
 
+    gainPoints = Math.round(total / 50) * 50;
+
     if (requestedPoints) {
       UsedPoints = Math.floor(requestedPoints / 1000) * 1000;
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
-          client: { update: { points: { decrement: UsedPoints } } },
+          client: {
+            update: {
+              points: { decrement: UsedPoints, increment: gainPoints },
+            },
+          },
+        },
+      });
+    } else {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          client: {
+            update: {
+              points: { increment: gainPoints },
+            },
+          },
         },
       });
     }
@@ -2265,12 +2298,6 @@ export class OrderService {
       isNaN(startOfDay.getTime()) ||
       isNaN(endOfDay.getTime())
     ) {
-      console.log('Invalid date detected:', {
-        dateWithoutTime,
-        vacationCheckDate,
-        startOfDay,
-        endOfDay,
-      });
       return new AppSuccess({ slots: [] }, 'Invalid date provided');
     }
 
@@ -2297,8 +2324,6 @@ export class OrderService {
         ],
       },
     });
-
-    console.log('Barber query result:', barber ? 'Found' : 'Not found');
 
     if (!barber) {
       return new AppSuccess({ slots: [] }, 'Barber not available on this date');
@@ -2355,7 +2380,6 @@ export class OrderService {
     }
 
     if (!allSlotsData.Slot) {
-      console.log('No slot configuration found for barber');
       return new AppSuccess(
         { slots: [] },
         'No slots configured for this barber',
@@ -2367,14 +2391,6 @@ export class OrderService {
       .split('T')[0];
     const { effectiveSlotDate, updatedSlot, slot } = allSlotsData.Slot;
 
-    console.log('Slot data:', {
-      slot: slot?.length || 0,
-      updatedSlot: updatedSlot?.length || 0,
-      effectiveSlotDate,
-      todayInEgypt,
-      dateWithoutTime,
-    });
-
     const effectiveSlotDateWithoutTime = effectiveSlotDate
       ? toZonedTime(effectiveSlotDate, EGYPT_TIMEZONE)
           .toISOString()
@@ -2385,7 +2401,6 @@ export class OrderService {
 
     // Check if barber has any slots at all
     if (!slot || slot.length === 0) {
-      console.log('No working hours configured for barber');
       return new AppSuccess(
         { slots: [] },
         'No working hours configured for this barber',
@@ -2519,13 +2534,6 @@ export class OrderService {
       availableSlots = validStartSlots;
     }
 
-    console.log('Final result:', {
-      totalSlots: allSlots.length,
-      blockedSlots: blockedSlots.length,
-      availableSlots: availableSlots.length,
-      slots: availableSlots,
-    });
-
     return new AppSuccess(
       { slots: availableSlots },
       'Slots fetched successfully',
@@ -2554,7 +2562,6 @@ export class OrderService {
 
       return { hour, minute };
     } catch (error) {
-      console.error(`Error parsing slot time "${slot}":`, error);
       return null;
     }
   }
@@ -2563,8 +2570,6 @@ export class OrderService {
     const slotsArray = [];
 
     const settings = await this.prisma.settings.findFirst({});
-
-    console.log('settings', settings);
 
     for (let hour = start; hour < end; hour++) {
       for (let minute = 0; minute < 60; minute += settings.slotDuration) {
