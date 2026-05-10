@@ -1119,7 +1119,7 @@ export class OrderService {
 
     const [existingOrder, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([
-        await this.prisma.order.findFirst({
+        this.prisma.order.findFirst({
           where: {
             ...(barberId && { barberId: barberId }),
             date: this.slotToDatetime(dateWithoutTime, slot),
@@ -1131,7 +1131,7 @@ export class OrderService {
             ],
           },
         }),
-        await this.prisma.user.findFirst({
+        this.prisma.user.findFirst({
           where: { id: userId },
           select: {
             UserOrders: {
@@ -1148,7 +1148,7 @@ export class OrderService {
           : [],
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
-        await this.prisma.user.findUnique({
+        this.prisma.user.findUnique({
           where: { id: userId },
           select: {
             client: { select: { points: true, ban: true } },
